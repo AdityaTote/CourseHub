@@ -25,7 +25,7 @@ import { courseRoutes } from "./routes/course.routes";
 
 // admin routes
 app.use("/api/v1/secure/admin", secureAdminRoute);
-app.use("/api/v1/auth/admin", adminRouter);
+app.use("/api/v1/admin", adminRouter);
 // user routes
 app.use("/api/v1/secure/user", secureUserRoute);
 app.use("/api/v1/auth/user", userRoutes);

@@ -12,7 +12,7 @@ export const checkAuth = (req: any, res: Response, next: NextFunction) => {
   }
 
   const adminScecrete: string = adminJwtSecret || "qazplm";
-
+  
   const decode = verifyToken(token, adminScecrete);
 
   if (!decode) {

@@ -11,6 +11,7 @@ import {
   AdminDashboard,
   AddCourse,
   AdminRegistration,
+  AdminManageCourses,
 } from "./pages/index.pages";
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
         <Route path="/admin/register" element={<AdminRegistration />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/add-course" element={<AddCourse />} />
+        <Route path="/admin/manage-courses" element={<AdminManageCourses />} />
         {/* <Route path="/my-courses" element={<PurchasedCourses />} /> */}
       </Routes>
     </Router>

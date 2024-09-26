@@ -8,6 +8,7 @@ import { AddCourse } from "./admin/AddCourse";
 import { AdminDashboard } from "./admin/AdminDashboard";
 import { AdminLogin } from "./admin/AdminLogin";
 import { AdminRegistration } from "./admin/AdminRegitration";
+import { AdminManageCourses } from "./admin/AdminManageCourse";
 
 export {
   Home,
@@ -20,4 +21,5 @@ export {
   AdminDashboard,
   AdminLogin,
   AdminRegistration,
+  AdminManageCourses,
 };

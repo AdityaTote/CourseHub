@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "api": "http://localhost:3030/api/v1",
     },
   },
 })

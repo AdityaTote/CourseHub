@@ -1,18 +1,27 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import useUserAuth from "@/hooks/useUserAuth";
-// import useAdminAuth from "@/hooks/useAdminAuth";
+import useAdminAuth from "@/hooks/useAdminAuth";
 
 export function Layout({ children, login, register }: { children: React.ReactNode, login: string, register: string }) {
   const { isAuthenticated: isUserAuthenticated, logout: userLogout } = useUserAuth();
-  // const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdminAuth();
+  const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdminAuth();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     if (isUserAuthenticated) {
       userLogout();
-    // } else if (isAdminAuthenticated) {
-    //   adminLogout();
+    } else if (isAdminAuthenticated) {
+      adminLogout();
+    }
+  };
+
+  const handleCourse = () => {
+    if (isAdminAuthenticated) {
+      navigate("/admin/manage-courses");
+    } else {
+      navigate("/courses");
     }
   };
 
@@ -23,19 +32,19 @@ export function Layout({ children, login, register }: { children: React.ReactNod
           <div className="flex justify-between h-16 items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
               <span className="text-2xl font-bold text-blue-600">
-                EduCrypto
+                LearnHub
               </span>
             </Link>
             <nav className="hidden sm:flex sm:space-x-8">
-              <Link
-                to="/courses"
+              <button
                 className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                onClick={handleCourse}
               >
                 Courses
-              </Link>
+              </button>
             </nav>
             <div className="hidden sm:flex sm:items-center sm:space-x-4">
-              {isUserAuthenticated  ? (
+              {isUserAuthenticated || isAdminAuthenticated ? (
                 <Button
                   variant="ghost"
                   className="text-gray-700 hover:text-blue-600"

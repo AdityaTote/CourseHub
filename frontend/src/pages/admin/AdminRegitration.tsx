@@ -1,23 +1,67 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Layout } from "../../components/Layout";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
+import { Layout } from "@/components/Layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import axios from "axios";
+import useAdminAuth from "@/hooks/useAdminAuth";
 
 export function AdminRegistration() {
+  const { isAuthenticated } = useAdminAuth();
   const navigate = useNavigate();
 
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  if (isAuthenticated) {
+    navigate("/admin");
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle admin registration logic here
+
+    if (password !== confirmPassword) {
+      setMessage("Passwords do not match");
+      setIsError(true);
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3030/api/v1/admin/register",
+        {
+          firstName: firstName,
+          lastName: lastName,
+          email: email,
+          password: confirmPassword,
+        }
+      );
+
+      if (response) {
+        setMessage(response.data.message);
+        setIsError(false);
+        setFirstName("");
+        setLastName("");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+        navigate("/admin/login");
+      } else {
+        setMessage(response.data.error);
+        setIsError(true);
+      }
+    } catch (error: any) {
+      console.log(error.response?.data?.error);
+      setMessage(error.response?.data?.error || "An error occurred");
+      setIsError(true);
+    }
   };
 
   return (
@@ -27,9 +71,21 @@ export function AdminRegistration() {
           <h2 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">
             Admin Registration
           </h2>
+          {message && (
+            <Alert
+              className={`mb-6 ${
+                isError
+                  ? "bg-red-100 text-red-700"
+                  : "bg-green-100 text-green-700"
+              }`}
+            >
+              <AlertTitle>{isError ? "Error" : "Success"}</AlertTitle>
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <Label htmlFor="firstName">Full Name</Label>
+              <Label htmlFor="firstName">First Name</Label>
               <Input
                 id="firstName"
                 name="firstName"
@@ -41,7 +97,7 @@ export function AdminRegistration() {
               />
             </div>
             <div>
-              <Label htmlFor="lastName">Full Name</Label>
+              <Label htmlFor="lastName">Last Name</Label>
               <Input
                 id="lastName"
                 name="lastName"
@@ -87,18 +143,11 @@ export function AdminRegistration() {
                 autoComplete="new-password"
                 required
                 className="mt-1"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
               />
             </div>
-            <div>
-              <Label htmlFor="adminCode">Admin Registration Code</Label>
-              <Input
-                id="adminCode"
-                name="adminCode"
-                type="text"
-                required
-                className="mt-1"
-              />
-            </div>
+
             <div>
               <Button
                 type="submit"

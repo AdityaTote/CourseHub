@@ -11,8 +11,16 @@ const courseSchema = new Schema(
       type: String,
       required: true,
     },
+    price: {
+      type: String,
+      required: true,
+    },
     imageURL: {
       type: String,
+    },
+    ownerName: {
+      type: String,
+      required: true,
     },
     createdBy: {
       type: Schema.Types.ObjectId,

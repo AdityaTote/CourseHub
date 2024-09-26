@@ -23,6 +23,7 @@ const loginSchema = z.object({
 const courseSchema = z.object({
   title: z.string(),
   description: z.string(),
+  price: z.string(),
 });
 
 const option = {
@@ -136,7 +137,7 @@ const handleAdminLogout = async (req: any, res: Response) => {
 
 const handleCourseCreation = async (req: any, res: Response) => {
   try {
-    const admin = req.user;
+    const admin = req.admin;
 
     if (!admin) {
       return res.status(401).json({
@@ -150,13 +151,13 @@ const handleCourseCreation = async (req: any, res: Response) => {
       return res.status(400).json({ error: courseData.error });
     }
 
-    const { title, description } = courseData.data;
+    const { title, description, price } = courseData.data;
 
     if (!title || !description) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const courseExists = await Course.findOne({ title: title });
+    const courseExists = await Course.findOne({ title: title, createdBy: admin.id });
 
     if (courseExists) {
       return res.status(400).json({ error: "Course already exists" });
@@ -164,11 +165,15 @@ const handleCourseCreation = async (req: any, res: Response) => {
 
     const imageLocalUrl = req.file.path;
 
+    console.log(imageLocalUrl);
+
     if (!imageLocalUrl) {
       return res.status(400).json({ error: "Image is required" });
     }
 
     const imageURL = await uploadImage(imageLocalUrl);
+
+    console.log(imageURL);
 
     if (!imageURL) {
       return res.status(500).json({ error: "Error in uploading image" });
@@ -177,7 +182,9 @@ const handleCourseCreation = async (req: any, res: Response) => {
     const course = await Course.create({
       title: title,
       description: description,
+      price: price,
       imageURL: imageURL,
+      ownerName: admin.firstName + " " + admin.lastName,
       createdBy: admin.id,
     });
 

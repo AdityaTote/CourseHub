@@ -1,8 +1,11 @@
 import multer from "multer";
+import path from "path"
+
+const filePath = path.join(__dirname, "../../public/temp");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "/public/temp");
+    cb(null, filePath);
   },
   filename: function (req, file, cb) {
     const filename: string = Date.now() + "-" + file.originalname;

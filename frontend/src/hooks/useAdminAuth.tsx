@@ -14,7 +14,7 @@ function useAdminAuth() {
           }
         );
 
-        if (response.status === 200 && response.data.user) {
+        if (response.status === 200 && response.data.admin) {
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
@@ -30,7 +30,7 @@ function useAdminAuth() {
 
   const logout = async () => {
     try {
-      await axios.get("http://localhost:3030/api/v1/auth/admin/logout", {
+      await axios.get("http://localhost:3030/api/v1/admin/logout", {
         withCredentials: true,
       });
       setIsAuthenticated(false);

@@ -6,13 +6,19 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
 import axios from "axios";
+import useUserAuth from "@/hooks/useUserAuth";
 
 export function Login() {
+  const { isAuthenticated } = useUserAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
+
+  if(isAuthenticated){
+    navigate('/')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
