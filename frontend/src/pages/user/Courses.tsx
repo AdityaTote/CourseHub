@@ -12,8 +12,17 @@ import {
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 
+interface Course {
+  _id: string;
+  title: string;
+  description: string;
+  price: number;
+  imageURL: string;
+  ownerName: string;
+}
+
 export function Courses() {
-  const [courses, setCourses] = useState(null);
+  const [courses, setCourses] = useState<Course[] | null>(null);
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -42,7 +51,7 @@ export function Courses() {
     fetchCourses();
   }, []);
 
-  const showDecription = (description) => {
+  const showDescription = (description: string) => {
     return description.slice(0, 100);
   };
 
@@ -68,12 +77,15 @@ export function Courses() {
               <Card key={course.id}>
                 <CardHeader>
                   <CardTitle>{course.title}</CardTitle>
-                  <CardDescription>{showDecription(course.description)}</CardDescription>
+                  <CardDescription>{showDescription(course.description)}</CardDescription>
                 </CardHeader>
-                <img src={course.imageURL} alt="course-image"  width={400} />
+                <img src={course.imageURL} alt="course-image" width={400} />
                 <CardContent>
                   <p className="text-2xl font-bold text-blue-600">
-                    {course.price}
+                    {course.price} ETH
+                  </p>
+                  <p className="text-sm text-gray-500 py-2">
+                    Created by: {course?.ownerName}
                   </p>
                 </CardContent>
                 <CardFooter>

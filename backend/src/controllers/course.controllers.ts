@@ -77,15 +77,13 @@ export const handleCourseDetail = async (req: any, res: Response) => {
   try {
     const { id } = req.params;
 
-    const intId = parseInt(id);
-
-    if (!intId) {
+    if (!id) {
       return res.status(400).json({
         error: "Invalid id",
       });
     }
 
-    const course = await Course.findById(intId);
+    const course = await Course.findById(id);
 
     if (!course) {
       return res.status(404).json({
