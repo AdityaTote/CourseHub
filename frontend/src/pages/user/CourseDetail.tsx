@@ -1,28 +1,53 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { Button } from "../../components/ui/button";
+import useUserAuth from "@/hooks/useUserAuth";
+import axios from "axios";
 
-const course = {
-  id: 1,
-  title: "Blockchain Fundamentals",
-  description:
-    "Learn the basics of blockchain technology and its applications.",
-  price: 0.1,
-  duration: "4 weeks",
-  lessons: [
-    "Introduction to Blockchain",
-    "Cryptography Basics",
-    "Consensus Mechanisms",
-    "Smart Contracts",
-  ],
-};
+// const course = {
+//   id: 1,
+//   title: "Blockchain Fundamentals",
+//   description:
+//     "Learn the basics of blockchain technology and its applications.",
+//   price: 0.1,
+//   duration: "4 weeks",
+//   lessons: [
+//     "Introduction to Blockchain",
+//     "Cryptography Basics",
+//     "Consensus Mechanisms",
+//     "Smart Contracts",
+//   ],
+// };
 
 export function CourseDetail() {
-  const { id } = useParams<{ id: string }>();
 
-  // In a real application, you would fetch the course data based on the id
-  // For this example, we're using a static course object
+  const { id } = useParams<{ id: string }>();
+  const [course, setCourse] = React.useState();
+  const [ message, setMessage ] = React.useState<string>("");
+  const [ isError, setIsError ] = React.useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchCourse = async() => {
+      try {
+        const response = await axios.get(`http://localhost:3030/api/v1/course/${id}`);
+  
+        if(response){
+          setCourse(response.data.data)
+          setMessage(response.data.message)
+          setIsError(false)
+        } else {
+          setMessage(response.data.error)
+          setIsError(true)
+        }
+      } catch (error: any) {
+        console.log(error.response.data.error);
+        setMessage(error.response.data.error);
+        setIsError(true);
+      }
+    }
+    fetchCourse()
+  }, [])
 
   return (
     <Layout login="/login" register="/register">
@@ -38,11 +63,7 @@ export function CourseDetail() {
                 Course Content
               </h2>
               <ul className="list-disc pl-5 space-y-2">
-                {course.lessons.map((lesson, index) => (
-                  <li key={index} className="text-gray-600">
-                    {lesson}
-                  </li>
-                ))}
+                
               </ul>
             </div>
           </div>

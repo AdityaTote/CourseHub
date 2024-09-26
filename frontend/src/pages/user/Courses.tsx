@@ -77,7 +77,7 @@ export function Courses() {
                   </p>
                 </CardContent>
                 <CardFooter>
-                  <Link to={`/courses/${course.id}`} className="w-full">
+                  <Link to={`/courses/${course._id}`} className="w-full">
                     <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
                       View Course
                     </Button>

@@ -4,7 +4,6 @@ import { PurchasedCourse } from "../models/purchasedCourse.models";
 
 export const handleCoursesPreview = async (req: any, res: Response) => {
   try {
-   
     const courses = await Course.find();
 
     if (!courses) {
@@ -69,6 +68,37 @@ export const handleCoursePurchase = async (req: any, res: Response) => {
   } catch (error: any) {
     console.log(error);
     return res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+
+export const handleCourseDetail = async (req: any, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const intId = parseInt(id);
+
+    if (!intId) {
+      return res.status(400).json({
+        error: "Invalid id",
+      });
+    }
+
+    const course = await Course.findById(intId);
+
+    if (!course) {
+      return res.status(404).json({
+        error: "Course not found",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Course detail",
+      data: course,
+    });
+  } catch (error: any) {
+    return res.json({
       error: error.message,
     });
   }
