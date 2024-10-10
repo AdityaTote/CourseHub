@@ -26,6 +26,8 @@ const courseSchema = z.object({
   price: z.string(),
 });
 
+type courseType = z.infer<typeof courseSchema>;
+
 const option = {
   httpOnly: true,
 };
@@ -157,7 +159,10 @@ const handleCourseCreation = async (req: any, res: Response) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const courseExists = await Course.findOne({ title: title, createdBy: admin.id });
+    const courseExists = await Course.findOne({
+      title: title,
+      createdBy: admin.id,
+    });
 
     if (courseExists) {
       return res.status(400).json({ error: "Course already exists" });
@@ -230,10 +235,106 @@ const handleAdminCourseDisplay = async (req: any, res: Response) => {
   }
 };
 
+const handleCourseUpdate = async (req: any, res: Response) => {
+  try {
+    const admin = req.admin;
+
+    if (!admin) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const courseId = req.params.id;
+
+    if (!courseId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const courseData = courseSchema.safeParse(req.body);
+
+    if (!courseData.success) {
+      return res.status(400).json({ error: courseData.error });
+    }
+
+    const { title, description, price } = courseData.data;
+
+    
+    const courseInputData: {
+      title?: string;
+      description?: string;
+      price?: string;
+    } = {};
+
+    if (title) {
+      courseInputData.title = title;
+    }
+
+    if (price) {
+      courseInputData.price = price;
+    }
+
+    if (description) {
+      courseInputData.description = description;
+    }
+
+    const updatedCourse = await Course.findByIdAndUpdate(
+      courseId,
+      courseInputData,
+      { new: true }
+    );
+
+    if (!updatedCourse) {
+      return res.status(500).json({ error: "Error in updating course" });
+    }
+
+    return res.status(200).json({
+      message: "Course updated successfully",
+      data: updatedCourse,
+    });
+  } catch (error: any) {
+    console.log(error);
+    return res.json({ error: error.message });
+  }
+};
+
+const handleCourseDelete = async (req: any, res: Response) => {
+  try {
+    const admin = req.admin;
+
+    if (!admin) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const courseId  = req.params.id;
+
+    if (!courseId) {
+      return res.status(403).json({
+        error: "Please provide CourseId",
+      });
+    }
+
+    const deletedCourse = await Course.findByIdAndDelete(courseId);
+
+    if (!deletedCourse) {
+      return res.status(500).json({
+        error: "Error in deleting course",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Course deleted successfully",
+    });
+  } catch (error: any) {
+    console.log(error);
+    return res.json({ error: error.message });
+  }
+};
+
 export {
   handleAdminRegister,
   handleAdminLogin,
   handleAdminLogout,
   handleCourseCreation,
   handleAdminCourseDisplay,
+  handleCourseUpdate,
+  handleCourseDelete,
 };

@@ -5,6 +5,8 @@ import {
   handleAdminLogout,
   handleAdminRegister,
   handleCourseCreation,
+  handleCourseDelete,
+  handleCourseUpdate
 } from "../controllers/admin.controllers";
 import { checkAuth } from "../middlewares/adminAuth.middlewares";
 import { upload } from "../middlewares/multer.middlewares";
@@ -20,4 +22,6 @@ adminRouter.use(checkAuth);
 adminRouter
   .get("/logout", handleAdminLogout)
   .post("/course", upload.single("coverImg"), handleCourseCreation)
-  .get("/courses", handleAdminCourseDisplay);
+  .patch("/course/:id", upload.single("coverImg"), handleCourseUpdate)
+  .get("/courses", handleAdminCourseDisplay)
+  .delete("/course/:id", handleCourseDelete);

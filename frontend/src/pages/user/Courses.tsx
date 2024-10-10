@@ -30,7 +30,9 @@ export function Courses() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await axios.get("http://localhost:3030/api/v1/course/preview");
+        const response = await axios.get(
+          "http://localhost:3030/api/v1/course/preview"
+        );
 
         if (response) {
           setCourses(response.data.data);
@@ -77,12 +79,21 @@ export function Courses() {
               <Card key={course.id}>
                 <CardHeader>
                   <CardTitle>{course.title}</CardTitle>
-                  <CardDescription>{showDescription(course.description)}</CardDescription>
+                  <CardDescription>
+                    {showDescription(course.description)}
+                  </CardDescription>
                 </CardHeader>
-                <img src={course.imageURL} alt="course-image" width={400} />
+                <div className="400">
+                  <img
+                    src={course.imageURL}
+                    alt="course-image"
+                    // width={400}
+                    className="h-64 w-400 object-cover mx-auto"
+                  />
+                </div>
                 <CardContent>
                   <p className="text-2xl font-bold text-blue-600">
-                    {course.price} ETH
+                    $ {course.price}
                   </p>
                   <p className="text-sm text-gray-500 py-2">
                     Created by: {course?.ownerName}

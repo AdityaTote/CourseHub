@@ -26,59 +26,71 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 
 export function AdminManageCourses() {
-  const [courses, setCourses] = useState();
+  const [courses, setCourses] = useState<any[]>([]);
   const [editingCourse, setEditingCourse] = useState(null);
+  const [title, setTitle] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [price, setPrice] = useState<string>("");
+  const [file, setFile] = useState<File | null>(null);
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:3030/api/v1/admin/courses",
-          {
-            withCredentials: true,
-          }
-        );
-        if (response) {
-          setCourses(response.data.data);
-          setMessage(response.data.message);
-          setIsError(false);
-        } else {
-          setMessage(response.data.error);
-          setIsError(true);
-        }
-      } catch (error: any) {
-        console.log(error.response.data.error);
-        setMessage(error.response.data.error);
-        setIsError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCourses();
-  }, []);
-
-  const showDecription = (description) => {
-    return description.slice(0, 100);
-  };
-
-  const handleEdit = (course) => {
-    setEditingCourse(course);
-  };
-
-  const handleDelete = async (courseId) => {
+  const fetchCourses = async () => {
     try {
-      console.log(courseId);
-      await axios.delete(
-        `http://localhost:3030/api/v1/admin/courses/${courseId}`,
+      const response = await axios.get(
+        "http://localhost:3030/api/v1/admin/courses",
         {
           withCredentials: true,
         }
       );
-      setCourses(courses.filter((course) => course.id !== courseId));
+      if (response) {
+        setCourses(response.data.data);
+        setMessage(response.data.message);
+        setIsError(false);
+      } else {
+        setMessage(response.data.error);
+        setIsError(true);
+      }
+    } catch (error: any) {
+      console.log(error.response.data.error);
+      setMessage(error.response.data.error);
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const showDecription = (description: string) => {
+    return description.slice(0, 100);
+  };
+
+  const handleEdit = async (course: any) => {
+    setEditingCourse(course);
+    setTitle(course.title);
+    setDescription(course.description);
+    setPrice(course.price);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (courseId: string | number) => {
+    try {
+      console.log(courseId);
+      const response = await axios.delete(
+        `http://localhost:3030/api/v1/admin/course/${courseId}`,
+        {
+          withCredentials: true,
+        }
+      );
+      if (response) {
+        setCourses(courses.filter((course) => course.id !== courseId));
+        await fetchCourses();
+      }
     } catch (error: any) {
       console.log(error.response.data.error);
       setMessage(error.response.data.error);
@@ -86,23 +98,40 @@ export function AdminManageCourses() {
     }
   };
 
-  const handleSave = async (updatedCourse) => {
+  const handleSave = async (updatedCourse: {
+    id: string | number;
+    title: string;
+    description: string;
+    price: string;
+    imageURL: string;
+  }) => {
     try {
-      const response = await axios.put(
-        `http://localhost:3030/api/v1/admin/courses/${updatedCourse.id}`,
-        updatedCourse,
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("description", description);
+      formData.append("price", price);
+
+      const response = await axios.patch(
+        `http://localhost:3030/api/v1/admin/course/${updatedCourse._id}`,
+        formData,
         {
           withCredentials: true,
         }
       );
-      setCourses(
-        courses.map((course) =>
-          course.id === updatedCourse.id ? updatedCourse : course
-        )
-      );
-      setEditingCourse(null);
-      setMessage(response.data.message);
-      setIsError(false);
+
+      if (response) {
+        console.log(response.data);
+        setMessage(response.data.message);
+        setCourses(
+          courses.map((course) =>
+            course.id === updatedCourse.id ? updatedCourse : course
+          )
+        );
+        setIsError(false);
+        setEditingCourse(null);
+        await fetchCourses();
+        setIsDialogOpen(false); // Close the dialog after successful save
+      }
     } catch (error: any) {
       console.log(error.response.data.error);
       setMessage(error.response.data.error);
@@ -132,98 +161,95 @@ export function AdminManageCourses() {
           </Button>
         </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {courses.map((course) => (
-            <Card key={course.id} className="flex flex-col justify-between">
-              <CardHeader>
-                <CardTitle>{course.title}</CardTitle>
-                <CardDescription>
-                  {showDecription(course.description)}
-                </CardDescription>
-              </CardHeader>
-              <img src={ course.imageURL } alt="course-image" className="rounded-xl" width={400} />
-              <CardContent>
-                <p className="text-2xl font-bold text-blue-600">
-                  {course.price}
-                </p>
-              </CardContent>
-              <CardFooter className="flex justify-between">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleEdit(course)}
-                    >
-                      <PencilIcon className="w-4 h-4 mr-2" />
-                      Edit
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit Course</DialogTitle>
-                      <DialogDescription>
-                        Make changes to the course details here.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSave({
-                          ...editingCourse,
-                          title: e.target.title.value,
-                          description: e.target.description.value,
-                          price: parseFloat(e.target.price.value),
-                          duration: e.target.duration.value,
-                        });
-                      }}
-                    >
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="title">Title</Label>
-                          <Input
-                            id="title"
-                            defaultValue={editingCourse?.title}
-                          />
+          {courses &&
+            courses.map((course) => (
+              <Card key={course.id} className="flex flex-col justify-between">
+                <CardHeader>
+                  <CardTitle>{course.title}</CardTitle>
+                  <CardDescription>
+                    {showDecription(course.description)}
+                  </CardDescription>
+                </CardHeader>
+                <img
+                  src={course.imageURL}
+                  alt="course-image"
+                  className="rounded-xl"
+                  width={400}
+                />
+                <CardContent>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {course.price}
+                  </p>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleEdit(course)}
+                      >
+                        <PencilIcon className="w-4 h-4 mr-2" />
+                        Edit
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Edit Course</DialogTitle>
+                        <DialogDescription>
+                          Make changes to the course details here.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          console.log(course);
+                          handleSave(course);
+                        }}
+                      >
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="title">Title</Label>
+                            <Input
+                              id="title"
+                              value={title}
+                              onChange={(e) => setTitle(e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                              id="description"
+                              value={description}
+                              onChange={(e) => setDescription(e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="price">Price ($)</Label>
+                            <Input
+                              id="price"
+                              type="number"
+                              step="0.01"
+                              value={price}
+                              onChange={(e) => setPrice(e.target.value)}
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <Label htmlFor="description">Description</Label>
-                          <Textarea
-                            id="description"
-                            defaultValue={editingCourse?.description}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="price">Price (ETH)</Label>
-                          <Input
-                            id="price"
-                            type="number"
-                            step="0.01"
-                            defaultValue={editingCourse?.price}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="duration">Duration</Label>
-                          <Input
-                            id="duration"
-                            defaultValue={editingCourse?.duration}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter className="mt-6">
-                        <Button type="submit">Save changes</Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-                <Button
-                  variant="destructive"
-                  onClick={() => handleDelete(course.id)}
-                >
-                  <TrashIcon className="w-4 h-4 mr-2" />
-                  Delete
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                        <DialogFooter className="mt-6">
+                          <Button type="submit">Save changes</Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDelete(course._id)}
+                  >
+                    <TrashIcon className="w-4 h-4 mr-2" />
+                    Delete
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
         </div>
       </div>
     </Layout>
