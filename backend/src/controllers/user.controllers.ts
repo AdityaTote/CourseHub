@@ -1,12 +1,9 @@
-import bcrypt, { hash } from "bcrypt";
 import { Request, Response } from "express";
-import { User } from "../models/users.models";
 import * as z from "zod";
 import { hashPass, verifyPass } from "../utils/managePass.utils";
 import { signToken } from "../utils/jwt.utils";
 import { userJwtSecret } from "../constant";
-import { PurchasedCourse } from "../models/purchasedCourse.models";
-import { Course } from "../models/course.models";
+import { Course, Purchase, User } from "../db/db";
 
 const userSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -40,7 +37,11 @@ const handleUserRegister = async (req: Request, res: Response) => {
     }
 
     //   check user already exists or not
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findFirst({
+      where: {
+        email: email,
+      }
+    });
 
     if (userExists) {
       return res.status(400).json({ error: "User already exists" });
@@ -55,11 +56,13 @@ const handleUserRegister = async (req: Request, res: Response) => {
       });
     }
 
-    const user: any = await User.create({
-      email: email,
-      firstName: firstName,
-      lastName: lastName,
-      password: hashedPass,
+    const user = await User.create({
+      data: {
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+        password: hashedPass
+      }
     });
 
     if (!user) {
@@ -94,13 +97,22 @@ const handleUserLogin = async (req: Request, res: Response) => {
     }
 
     //   check user already exists or not
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findFirst({
+      where: {
+        email: email,
+      }
+    });
 
     if (!userExists) {
       return res.status(400).json({ error: "User doesnot exists" });
     }
 
     //   pass check
+    if(!userExists.password){
+      return res.status(404).json({
+        error: "Invalid password",
+      });
+    }
     const passCheck = await verifyPass(password, userExists.password);
 
     if (!passCheck) {
@@ -145,19 +157,35 @@ const handleUserCourses = async (req: any, res: Response) => {
       return res.status(400).json({ error: "User not found" });
     }
 
-    const userCourses = await PurchasedCourse.find({ userId: user.id });
+    const userCourses = await Purchase.findMany({
+      where: {
+        userId: user.id,
+      },
+    });
+
+    type UserCourse = typeof userCourses[0];
 
     if (!userCourses) {
       return res.status(404).json({ error: "No courses found" });
     }
 
-    let courses: any[] = [];
+    let courses: UserCourse[] = [];
 
     for (let i = 0; i < userCourses.length; i++) {
-      courses.push(userCourses[i].courseId);
+      if (userCourses[i]?.courseId) {
+        if (userCourses[i].courseId) {
+          courses.push(userCourses[i]);
+        }
+      }
     }
 
-    const courseDetails = await Course.find({ _id: { $in: courses } });
+    const courseDetails = await Course.findMany({
+      where: {
+        id: {
+          in: courses.map((course) => course.courseId).filter((id) => id !== null),
+        },
+      },
+    });
 
     if (!courseDetails) {
       return res.status(404).json({ error: "No courses found" });
@@ -175,54 +203,55 @@ const handleUserCourses = async (req: any, res: Response) => {
   }
 };
 
-const handleUserCoursePurchase = async (req: any, res: Response) => {
+// const handleUserCoursePurchase = async (req: any, res: Response) => {
 
-  try {
-    const user = req.user;
+//   try {
+//     const user = req.user;
   
-    if(!user){
-      return res.status(401).json({error: "Unauthorized"});
-    }
+//     if(!user){
+//       return res.status(401).json({error: "Unauthorized"});
+//     }
   
-    const { courseId } = req.body;
+//     const { courseId } = req.body;
   
-    if(!courseId){
-      return res.status(400).json({error: "Missing required fields"});
-    }
+//     if(!courseId){
+//       return res.status(400).json({error: "Missing required fields"});
+//     }
   
-    const course = await Course.findById(courseId);
+//     const course = await db.query.Course.findFirst({
+//       where: eq(Course.id, courseId),
+//     });
   
-    if(!course){
-      return res.status(404).json({error: "Course not found"});
-    }
+//     if(!course){
+//       return res.status(404).json({error: "Course not found"});
+//     }
   
-    const purchasedCourse = await PurchasedCourse.create({
-      courseId,
-      userId: user.id,
-    });
+//     const purchasedCourse = await db.insert(PurchasedCourse).values({
+//       courseId: courseId,
+//       userId: user.id,
+//       transactionId: transactionId
+//     });
   
-    if(!purchasedCourse){
-      return res.status(500).json({error: "Error in purchasing course"});
-    }
+//     if(!purchasedCourse){
+//       return res.status(500).json({error: "Error in purchasing course"});
+//     }
   
-    return res.status(200).json({
-      message: "Course purchased successfully",
-      data: purchasedCourse,
-    });
-  } catch (error: any) {
-    console.log(error);
-    return res.json({
-      error: error.message,
-    });
-    
-  }
-
-}
+//     return res.status(200).json({
+//       message: "Course purchased successfully",
+//       data: purchasedCourse,
+//     });
+//   } catch (error: any) {
+//     console.log(error);
+//     return res.json({
+//       error: error.message,
+//     });
+//   }
+// }
 
 export {
   handleUserRegister,
   handleUserLogin,
   handleUserLogout,
   handleUserCourses,
-  handleUserCoursePurchase
+  // handleUserCoursePurchase
 };

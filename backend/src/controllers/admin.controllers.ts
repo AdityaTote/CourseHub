@@ -1,12 +1,9 @@
-import bcrypt, { hash } from "bcrypt";
 import { Request, Response } from "express";
-import { Admin } from "../models/admin.models";
 import * as z from "zod";
 import { hashPass, verifyPass } from "../utils/managePass.utils";
 import { signToken } from "../utils/jwt.utils";
 import { adminJwtSecret } from "../constant";
-import { Course } from "../models/course.models";
-import { uploadImage } from "../utils/cloudinary.utils";
+import { Admin, Course } from "../db/db";
 
 const userSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -24,9 +21,8 @@ const courseSchema = z.object({
   title: z.string(),
   description: z.string(),
   price: z.string(),
+  imageURL: z.string(),
 });
-
-type courseType = z.infer<typeof courseSchema>;
 
 const option = {
   httpOnly: true,
@@ -47,7 +43,11 @@ const handleAdminRegister = async (req: Request, res: Response) => {
   }
 
   //   check user already exists or not
-  const userExists = await Admin.findOne({ email });
+  const userExists = await Admin.findFirst({
+    where: {
+      email: email,
+    },
+  });
 
   if (userExists) {
     return res.status(400).json({ error: "Admin already exists" });
@@ -63,10 +63,12 @@ const handleAdminRegister = async (req: Request, res: Response) => {
   }
 
   const user = await Admin.create({
-    email: email,
-    firstName: firstName,
-    lastName: lastName,
-    password: hashedPass,
+    data: {
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+      password: hashedPass,
+    }
   });
 
   if (!user) {
@@ -94,13 +96,22 @@ const handleAdminLogin = async (req: Request, res: Response) => {
     }
 
     //   check user already exists or not
-    const userExists = await Admin.findOne({ email });
+    const userExists = await Admin.findFirst({
+      where: {
+        email: email
+      },
+    });
 
     if (!userExists) {
       return res.status(400).json({ error: "Admin doesnot exists" });
     }
 
     //   pass check
+    if(!userExists.password) {
+      return res.status(404).json({
+        error: "Invalid password",
+      });
+    }
     const passCheck = await verifyPass(password, userExists.password);
 
     if (!passCheck) {
@@ -113,9 +124,8 @@ const handleAdminLogin = async (req: Request, res: Response) => {
 
     const token = signToken(userExists, adminSecreteKey);
 
-    return res.status(200).cookie("adminSessionId", token, option).json({
+    return res.status(204).cookie("adminSessionId", token, option).json({
       message: "Admin logged in successfully",
-      data: userExists,
     });
   } catch (error: any) {
     console.log(error);
@@ -153,44 +163,33 @@ const handleCourseCreation = async (req: any, res: Response) => {
       return res.status(400).json({ error: courseData.error });
     }
 
-    const { title, description, price } = courseData.data;
+    const { title, description, price, imageURL } = courseData.data;
 
     if (!title || !description) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const courseExists = await Course.findOne({
-      title: title,
-      createdBy: admin.id,
+
+    const courseExists = await Course.findFirst({
+      where: {
+        title: title,
+        createrId: admin.id
+      } 
     });
+    
 
     if (courseExists) {
       return res.status(400).json({ error: "Course already exists" });
     }
 
-    const imageLocalUrl = req.file.path;
-
-    console.log(imageLocalUrl);
-
-    if (!imageLocalUrl) {
-      return res.status(400).json({ error: "Image is required" });
-    }
-
-    const imageURL = await uploadImage(imageLocalUrl);
-
-    console.log(imageURL);
-
-    if (!imageURL) {
-      return res.status(500).json({ error: "Error in uploading image" });
-    }
-
     const course = await Course.create({
-      title: title,
-      description: description,
-      price: price,
-      imageURL: imageURL,
-      ownerName: admin.firstName + " " + admin.lastName,
-      createdBy: admin.id,
+      data: {
+        title: title,
+        description: description,
+        price: price,
+        imageURL: imageURL,
+        createrId: admin.id,
+      }
     });
 
     if (!course) {
@@ -217,7 +216,13 @@ const handleAdminCourseDisplay = async (req: any, res: Response) => {
       return res.status(401).json({ error: "User is unauthorized" });
     }
 
-    const courses = await Course.find({ createdBy: admin.id });
+    const courses = await Course.findMany({
+      where: {
+        createrId: admin.id,
+      },
+    });
+
+    console.log(courses);
 
     if (!courses) {
       return res.status(404).json({ error: "Courses not found" });
@@ -276,11 +281,12 @@ const handleCourseUpdate = async (req: any, res: Response) => {
       courseInputData.description = description;
     }
 
-    const updatedCourse = await Course.findByIdAndUpdate(
-      courseId,
-      courseInputData,
-      { new: true }
-    );
+    const updatedCourse = await Course.update({
+      where: {
+        id: courseId,
+      },
+      data: courseInputData,
+    })
 
     if (!updatedCourse) {
       return res.status(500).json({ error: "Error in updating course" });
@@ -312,7 +318,11 @@ const handleCourseDelete = async (req: any, res: Response) => {
       });
     }
 
-    const deletedCourse = await Course.findByIdAndDelete(courseId);
+    const deletedCourse = await Course.delete({
+      where: {
+        id: courseId,
+      }
+    })
 
     if (!deletedCourse) {
       return res.status(500).json({

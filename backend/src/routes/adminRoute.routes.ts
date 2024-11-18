@@ -8,7 +8,7 @@ import {
   handleCourseDelete,
   handleCourseUpdate
 } from "../controllers/admin.controllers";
-import { checkAuth } from "../middlewares/adminAuth.middlewares";
+import { checkAdminAuth } from "../middlewares/adminAuth.middlewares";
 import { upload } from "../middlewares/multer.middlewares";
 
 export const adminRouter = Router();
@@ -17,11 +17,11 @@ adminRouter
   .post("/register", handleAdminRegister)
   .post("/login", handleAdminLogin);
 
-adminRouter.use(checkAuth);
+adminRouter.use(checkAdminAuth);
 
 adminRouter
   .get("/logout", handleAdminLogout)
-  .post("/course", upload.single("coverImg"), handleCourseCreation)
+  .post("/course", handleCourseCreation)
   .patch("/course/:id", upload.single("coverImg"), handleCourseUpdate)
   .get("/courses", handleAdminCourseDisplay)
-  .delete("/course/:id", handleCourseDelete);
+  .delete("/course/:id", handleCourseDelete)

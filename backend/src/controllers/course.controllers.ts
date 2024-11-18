@@ -1,10 +1,10 @@
 import { Response } from "express";
-import { Course } from "../models/course.models";
-import { PurchasedCourse } from "../models/purchasedCourse.models";
+import { Course } from "../db/db";
+
 
 export const handleCoursesPreview = async (req: any, res: Response) => {
   try {
-    const courses = await Course.find();
+    const courses = await Course.findMany();
 
     if (!courses) {
       return res.status(404).json({
@@ -24,54 +24,54 @@ export const handleCoursesPreview = async (req: any, res: Response) => {
   }
 };
 
-export const handleCoursePurchase = async (req: any, res: Response) => {
-  try {
-    const user = req.user;
+// export const handleCoursePurchase = async (req: any, res: Response) => {
+//   try {
+//     const user = req.user;
 
-    if (!user) {
-      return res.status(401).json({
-        error: "Unauthorized",
-      });
-    }
+//     if (!user) {
+//       return res.status(401).json({
+//         error: "Unauthorized",
+//       });
+//     }
 
-    const { courseId } = req.body;
+//     const { courseId } = req.body;
 
-    if (!courseId) {
-      return res.status(400).json({
-        error: "Missing required fields",
-      });
-    }
+//     if (!courseId) {
+//       return res.status(400).json({
+//         error: "Missing required fields",
+//       });
+//     }
 
-    const course = await Course.findById(courseId);
+//     const course = await Course.findById(courseId);
 
-    if (!course) {
-      return res.status(404).json({
-        error: "Course not found",
-      });
-    }
+//     if (!course) {
+//       return res.status(404).json({
+//         error: "Course not found",
+//       });
+//     }
 
-    const purchasedCourse = await PurchasedCourse.create({
-      courseId,
-      userId: user.id,
-    });
+//     const purchasedCourse = await PurchasedCourse.create({
+//       courseId,
+//       userId: user.id,
+//     });
 
-    if (!purchasedCourse) {
-      return res.status(500).json({
-        error: "Error in purchasing course",
-      });
-    }
+//     if (!purchasedCourse) {
+//       return res.status(500).json({
+//         error: "Error in purchasing course",
+//       });
+//     }
 
-    return res.status(201).json({
-      message: "Course purchased successfully",
-      data: purchasedCourse,
-    });
-  } catch (error: any) {
-    console.log(error);
-    return res.status(500).json({
-      error: error.message,
-    });
-  }
-};
+//     return res.status(201).json({
+//       message: "Course purchased successfully",
+//       data: purchasedCourse,
+//     });
+//   } catch (error: any) {
+//     console.log(error);
+//     return res.status(500).json({
+//       error: error.message,
+//     });
+//   }
+// };
 
 export const handleCourseDetail = async (req: any, res: Response) => {
   try {
@@ -83,7 +83,11 @@ export const handleCourseDetail = async (req: any, res: Response) => {
       });
     }
 
-    const course = await Course.findById(id);
+    const course = await Course.findFirst({
+      where: {
+        id: id
+      }
+    });
 
     if (!course) {
       return res.status(404).json({

@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export const DBSTRING = process.env.MONGO_URI;
+export const DBSTRING = process.env.DB_STRING;
 export const port = process.env.PORT;
 export const userJwtSecret = process.env.USER_JWT_SECERET_KEY;
 export const adminJwtSecret = process.env.ADMIN_JWT_SECERET_KEY;

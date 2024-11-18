@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 
 export const signToken = (user: any, jwtSecreteKey: string): string => {
   const payload = {
-    id: user._id,
+    id: user.id,
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,

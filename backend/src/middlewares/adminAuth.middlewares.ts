@@ -2,7 +2,7 @@ import { Response, NextFunction } from "express";
 import { verifyToken } from "../utils/jwt.utils";
 import { adminJwtSecret } from "../constant";
 
-export const checkAuth = (req: any, res: Response, next: NextFunction) => {
+export const checkAdminAuth = (req: any, res: Response, next: NextFunction) => {
   const token = req.cookies?.adminSessionId;
 
   if (!token) {

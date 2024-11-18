@@ -1,9 +1,9 @@
 import { Router, Response } from "express";
-import { checkAuth } from "../middlewares/adminAuth.middlewares";
+import { checkAdminAuth } from "../middlewares/adminAuth.middlewares";
 
 export const secureAdminRoute = Router();
 
-secureAdminRoute.get("/", checkAuth, (req: any, res: Response) => {
+secureAdminRoute.get("/", checkAdminAuth, (req: any, res: Response) => {
 
     const admin = req.admin;
 

@@ -22,10 +22,12 @@ import { secureUserRoute } from "./routes/secureUser.routes";
 import { adminRouter } from "./routes/adminRoute.routes";
 import userRoutes from "./routes/user.routes";
 import { courseRoutes } from "./routes/course.routes";
+import { preSignedUrlRouter } from "./routes/presignedUrl.routes";
 
 // admin routes
 app.use("/api/v1/secure/admin", secureAdminRoute);
 app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/presignedUrl",preSignedUrlRouter)
 // user routes
 app.use("/api/v1/secure/user", secureUserRoute);
 app.use("/api/v1/auth/user", userRoutes);
