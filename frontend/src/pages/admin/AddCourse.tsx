@@ -1,13 +1,14 @@
 import React, { useState } from "react";
-import { Layout } from "../../components/Layout";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Textarea } from "../../components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
+import { Layout } from "@/components/Layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import useAdminAuth from "@/hooks/useAdminAuth";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { BACKEND_URL, CLOUDFRONT_URL } from "@/utils";
 
 export function AddCourse() {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export function AddCourse() {
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [price, setPrice] = useState<string>("");
-  const [file, setFile] = useState<File | null>(null);
+  const [imgUrl, setImgUrl] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
 
@@ -23,34 +24,48 @@ export function AddCourse() {
     navigate("/admin/login");
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
+  const handleFileChange = async(e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      const response = await axios.get(`${BACKEND_URL}/api/v1/presignedUrl`, {
+        withCredentials: true,
+      });
+      const presignedUrl = response.data.preSignedUrl;
+      const formData = new FormData();
+      formData.set("bucket", response.data.fields["bucket"])
+      formData.set("X-Amz-Algorithm", response.data.fields["X-Amz-Algorithm"]);
+      formData.set("X-Amz-Credential", response.data.fields["X-Amz-Credential"]);
+      formData.set("X-Amz-Date", response.data.fields["X-Amz-Date"]);
+      formData.set("key", response.data.fields["key"]);
+      formData.set("Policy", response.data.fields["Policy"]);
+      formData.set("X-Amz-Signature", response.data.fields["X-Amz-Signature"]);
+      if (file) {
+        formData.append("file", file);
+      }
+      const awsResponse = await axios.post(presignedUrl, formData);
+      if (!awsResponse) {
+        throw new Error("Failed to upload image to S3");
+      }
+      const urlPath = `${CLOUDFRONT_URL}/${response.data.fields["key"]}`
+      setImgUrl(urlPath)
+  } catch(e) {
+      console.log(e)
+  }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) {
-      setMessage("Please select an image to upload.");
-      setIsError(true);
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("price", price);
-    formData.append("coverImg", file);
 
     try {
       const response = await axios.post(
         "http://localhost:3030/api/v1/admin/course",
-        formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+          title: title,
+          description: description,
+          price: price,
+          imageURL: imgUrl,
+        },
+        {
           withCredentials: true,
         }
       );
@@ -60,7 +75,7 @@ export function AddCourse() {
         setIsError(false);
         setTitle("");
         setDescription("");
-        setFile(null);
+        setImgUrl("");
         setTimeout(() => {
           navigate("/admin")
         }, 1000);
