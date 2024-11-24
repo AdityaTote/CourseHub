@@ -1,17 +1,19 @@
-import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { Button } from "../../components/ui/button";
 import useAdminAuth from "@/hooks/useAdminAuth";
+// import { useEffect } from "react";
 
 export function AdminDashboard() {
 
   const { isAuthenticated } = useAdminAuth();
   const navigate = useNavigate();
   
-  if(!isAuthenticated){
-    navigate("/admin/login")
-  }
+  
+    if(!isAuthenticated){
+      navigate("/admin/login")
+    }
+
 
   return (
     <Layout login="/admin/login" register="/admin/register">

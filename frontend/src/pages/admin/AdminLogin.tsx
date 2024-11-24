@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { Button } from "../../components/ui/button";
@@ -11,8 +11,8 @@ import useAdminAuth from "@/hooks/useAdminAuth";
 export function AdminLogin() {
   const { isAuthenticated } = useAdminAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
 
@@ -26,15 +26,13 @@ export function AdminLogin() {
       const response = await axios.post(
         "http://localhost:3030/api/v1/admin/login",
         {
-          email: email,
-          password: password,
+          email: emailRef.current?.value,
+          password: passRef.current?.value,
         },
         { withCredentials: true }
       );
 
       if (response.status === 200 || response.status === 204) {
-        setEmail("");
-        setPassword("");
         setMessage(response.data.message || "Login successful");
         setIsError(false);
         navigate("/admin");
@@ -44,7 +42,7 @@ export function AdminLogin() {
         setIsError(true);
       }
     } catch (error: any) {
-      console.log(error.response?.data?.error);
+      console.error(error.response?.data?.error);
       setMessage(error.response?.data?.error || "An error occurred");
       setIsError(true);
     }
@@ -79,8 +77,7 @@ export function AdminLogin() {
                 autoComplete="email"
                 required
                 className="mt-1"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                ref={emailRef}
               />
             </div>
             <div>
@@ -92,8 +89,7 @@ export function AdminLogin() {
                 autoComplete="current-password"
                 required
                 className="mt-1"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                ref={passRef}
               />
             </div>
             <div>

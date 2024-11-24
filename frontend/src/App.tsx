@@ -13,9 +13,11 @@ import {
   AdminRegistration,
   AdminManageCourses,
 } from "./pages/index.pages";
+import { RecoilRoot } from "recoil";
 
 function App() {
   return (
+    <RecoilRoot>
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -32,6 +34,7 @@ function App() {
         {/* <Route path="/my-courses" element={<PurchasedCourses />} /> */}
       </Routes>
     </Router>
+    </RecoilRoot>
   );
 }
 

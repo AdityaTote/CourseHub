@@ -222,8 +222,6 @@ const handleAdminCourseDisplay = async (req: any, res: Response) => {
       },
     });
 
-    console.log(courses);
-
     if (!courses) {
       return res.status(404).json({ error: "Courses not found" });
     }

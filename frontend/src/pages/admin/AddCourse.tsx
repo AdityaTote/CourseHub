@@ -77,7 +77,7 @@ export function AddCourse() {
         setDescription("");
         setImgUrl("");
         setTimeout(() => {
-          navigate("/admin")
+          navigate("/admin/manage-courses")
         }, 1000);
       } else {
         setMessage("An error occurred while adding the course.");
@@ -94,7 +94,7 @@ export function AddCourse() {
   };
 
   return (
-    <Layout login="/login" register="/register" >
+    <Layout >
       <div className="max-w-3xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
           Add New Course

@@ -13,8 +13,7 @@ secureAdminRoute.get("/", checkAdminAuth, (req: any, res: Response) => {
         })
     }
 
-    return res.status(200).json({
+    return res.status(204).json({
         message: "Welcome to the secure route",
-        admin
     })
 })

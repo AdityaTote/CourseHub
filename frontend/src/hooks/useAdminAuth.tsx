@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 
 function useAdminAuth() {
@@ -14,7 +14,7 @@ function useAdminAuth() {
           }
         );
 
-        if (response.status === 200 && response.data.admin) {
+        if (response) {
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);

@@ -1,2 +1,2 @@
-export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-export const CLOUDFRONT_URL = import.meta.env.VITE_CLOUDFRONT_URL;
+export const BACKEND_URL = "http://localhost:3030";
+export const CLOUDFRONT_URL = `https://d3u0uf6tnodpp9.cloudfront.net`;

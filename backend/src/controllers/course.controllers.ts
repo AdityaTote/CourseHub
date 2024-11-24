@@ -4,7 +4,21 @@ import { Course } from "../db/db";
 
 export const handleCoursesPreview = async (req: any, res: Response) => {
   try {
-    const courses = await Course.findMany();
+    const courses = await Course.findMany({
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        price: true,
+        imageURL: true,
+        creater: {
+          select: {
+            firstName: true,
+            lastName: true,
+          }
+        }
+      }
+    });
 
     if (!courses) {
       return res.status(404).json({
