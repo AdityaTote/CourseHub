@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import  { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { Button } from "../../components/ui/button";
@@ -11,10 +11,10 @@ import useUserAuth from "@/hooks/useUserAuth";
 export function Login() {
   const { isAuthenticated } = useUserAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passRef = useRef<HTMLInputElement>(null);
 
   if(isAuthenticated){
     navigate('/')
@@ -22,6 +22,8 @@ export function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const email = emailRef.current?.value;
+    const password = passRef.current?.value;
     try {
       const response = await axios.post(
         "http://localhost:3030/api/v1/auth/user/login",
@@ -33,8 +35,6 @@ export function Login() {
       );
 
       if (response.status === 200 || response.status === 204) {
-        setEmail("");
-        setPassword("");
         setMessage(response.data.message || "Login successful");
         setIsError(false);
         navigate("/");
@@ -51,7 +51,7 @@ export function Login() {
   };
 
   return (
-    <Layout login="/login" register="/register">
+    <Layout>
       <div className="max-w-md mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
         <div className="bg-white p-8 shadow rounded-lg">
           <h2 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">
@@ -76,8 +76,7 @@ export function Login() {
                 autoComplete="email"
                 required
                 className="mt-1"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                ref={emailRef}
               />
             </div>
             <div>
@@ -89,8 +88,7 @@ export function Login() {
                 autoComplete="current-password"
                 required
                 className="mt-1"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                ref={passRef}
               />
             </div>
             <div>
@@ -115,3 +113,4 @@ export function Login() {
     </Layout>
   );
 }
+

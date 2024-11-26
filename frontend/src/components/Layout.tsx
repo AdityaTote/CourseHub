@@ -11,8 +11,10 @@ import {
 import { NavLink } from "react-router-dom";
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated: isUserAuthenticated, logout: userLogout } = useUserAuth();
-  const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdminAuth();
+  const { isAuthenticated: isUserAuthenticated, logout: userLogout } =
+    useUserAuth();
+  const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } =
+    useAdminAuth();
 
   const handleLogout = () => {
     if (isUserAuthenticated) {
@@ -27,29 +29,37 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-blue-600">
-                CourseHub
-              </span>
-            </Link>
-            <nav className="hidden sm:flex sm:space-x-8">
-              {isAdminAuthenticated ? (<CoursesLink to={"/admin/manage-courses"} />) : (<CoursesLink to={"/courses"} />) }
-            </nav>
-            <div className="hidden sm:flex sm:items-center sm:space-x-4">
-              {isUserAuthenticated || isAdminAuthenticated ? (
-                <Button
-                  variant="ghost"
-                  className="text-gray-700 hover:text-blue-600"
-                  onClick={handleLogout}
-                >
-                  Log out
-                </Button>
-              ) : (
-                <>
-                  <LoginOption/>
-                  <RegisterOption/>
-                </>
-              )}
+            <div>
+              <Link to="/" className="flex-shrink-0 flex items-center">
+                <span className="text-2xl font-bold text-blue-600">
+                  CourseHub
+                </span>
+              </Link>
+            </div>
+            <div className={"flex"}>
+              <nav className="flex space-x-8 ">
+                {isAdminAuthenticated ? (
+                  <CoursesLink to={"/admin/manage-courses"} />
+                ) : (
+                  <CoursesLink to={"/courses"} />
+                )}
+              </nav>
+              <div className="flex items-center space-x-4">
+                {isUserAuthenticated || isAdminAuthenticated ? (
+                  <Button
+                    variant="ghost"
+                    className="text-gray-700 hover:text-blue-600"
+                    onClick={handleLogout}
+                  >
+                    Log out
+                  </Button>
+                ) : (
+                  <>
+                    <LoginOption />
+                    <RegisterOption />
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -66,22 +76,27 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-interface CoursesLinkProps{
+interface CoursesLinkProps {
   to: string;
 }
 
-function CoursesLink({to}: CoursesLinkProps){
-  return(
-    <Link to={to} className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">
+function CoursesLink({ to }: CoursesLinkProps) {
+  return (
+    <Link
+      to={to}
+      className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+    >
       Courses
     </Link>
-  )
+  );
 }
 
 const LoginOption = () => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
-      <span className="hover:bg-gray-100 px-3 py-2 rounded-md hover:text-blue-600  font-medium cursor-pointer ">Login</span>
+      <span className="hover:bg-gray-100 px-3 py-2 rounded-md hover:text-blue-600  font-medium cursor-pointer ">
+        Login
+      </span>
     </DropdownMenuTrigger>
     <DropdownMenuContent className="w-56">
       <DropdownMenuCheckboxItem>
@@ -97,7 +112,9 @@ const LoginOption = () => (
 const RegisterOption = () => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
-      <span className="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded-md cursor-pointer">Register</span>
+      <span className="bg-blue-600 text-white hover:bg-blue-700 p-2 rounded-md cursor-pointer">
+        Register
+      </span>
     </DropdownMenuTrigger>
     <DropdownMenuContent className="w-56">
       <DropdownMenuCheckboxItem>

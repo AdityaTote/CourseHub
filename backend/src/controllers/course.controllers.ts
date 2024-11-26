@@ -97,11 +97,28 @@ export const handleCourseDetail = async (req: any, res: Response) => {
       });
     }
 
+    console.log(id)
+
     const course = await Course.findFirst({
       where: {
         id: id
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        price: true,
+        imageURL: true,
+        creater: {
+          select: {
+            firstName: true,
+            lastName: true,
+          }
+        }
       }
     });
+
+    console.log(course)
 
     if (!course) {
       return res.status(404).json({
@@ -119,3 +136,55 @@ export const handleCourseDetail = async (req: any, res: Response) => {
     });
   }
 };
+
+export const handleCourseSearch = async(req: any, res: Response) => {
+
+  try{
+    const { search } = req.query;
+
+  if (!search) {
+    return res.status(400).json({
+      error: "Missing search query",
+    });
+  }
+
+  const courses = await Course.findMany({
+    where: {
+      OR: [
+        {
+          title: {
+            contains: search,
+            mode: "insensitive",
+          }
+        },
+        {
+          description: {
+            contains: search,
+            mode: "insensitive",
+          }
+        }
+      ]
+    }
+  });
+
+  if(!courses){
+    return res.status(404).json({
+      message: "No courses found"
+    })
+  }
+
+  if(courses.length === 0){
+    return res.status(404).json({
+      message: "No courses found"
+    })
+  }
+
+  return res.status(200).json({
+    message: "Courses found",
+    data: courses,
+  });
+  } catch (error: any) {
+    console.log(error.message)
+  }
+
+}

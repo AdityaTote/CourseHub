@@ -27,7 +27,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { Layout } from "@/components/Layout";
 import { useFetch } from "@/hooks/useFetch";
-import { BACKEND_URL } from "@/utils";
+import { BACKEND_URL, CLOUDFRONT_URL } from "@/utils";
 import { CourseSkeleton } from "@/components/CourseSkeleton";
 
 type Course = {
@@ -39,8 +39,10 @@ type Course = {
 };
 
 export function AdminManageCourses() {
-  // const { state, contents } = useRecoilValueLoadable(adminCourseAtom);
-  const { data, loading, error } = useFetch(`${BACKEND_URL}/api/v1/admin/courses`, true);
+  const { data, loading, error } = useFetch(
+    `${BACKEND_URL}/api/v1/admin/courses`,
+    true
+  );
 
   if (loading) {
     return <CourseSkeleton />;
@@ -85,6 +87,7 @@ function Course({ course }: { course: Course }) {
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [imgUrl, setImgUrl] = useState<string>("");
 
   const showDecription = (description: string) => {
     return description.slice(0, 100);
@@ -101,6 +104,35 @@ function Course({ course }: { course: Course }) {
   // const handleDelete = async (courseId: string) => {
 
   // };
+
+  const handleFileChange = async(e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      const response = await axios.get(`${BACKEND_URL}/api/v1/presignedUrl`, {
+        withCredentials: true,
+      });
+      const presignedUrl = response.data.preSignedUrl;
+      const formData = new FormData();
+      formData.set("bucket", response.data.fields["bucket"])
+      formData.set("X-Amz-Algorithm", response.data.fields["X-Amz-Algorithm"]);
+      formData.set("X-Amz-Credential", response.data.fields["X-Amz-Credential"]);
+      formData.set("X-Amz-Date", response.data.fields["X-Amz-Date"]);
+      formData.set("key", response.data.fields["key"]);
+      formData.set("Policy", response.data.fields["Policy"]);
+      formData.set("X-Amz-Signature", response.data.fields["X-Amz-Signature"]);
+      if (file) {
+        formData.append("file", file);
+      }
+      const awsResponse = await axios.post(presignedUrl, formData);
+      if (!awsResponse) {
+        throw new Error("Failed to upload image to S3");
+      }
+      const urlPath = `${CLOUDFRONT_URL}/${response.data.fields["key"]}`
+      setImgUrl(urlPath)
+  } catch(e) {
+      console.log(e)
+  }
+  };
 
   const handleSave = async (updatedCourse: {
     id: string | number;
@@ -133,7 +165,7 @@ function Course({ course }: { course: Course }) {
         );
         setIsError(false);
         setEditingCourse(null);
-        setIsDialogOpen(false); // Close the dialog after successful save
+        setIsDialogOpen(false);
       }
     } catch (error: any) {
       console.log(error.response.data.error);
@@ -210,6 +242,19 @@ function Course({ course }: { course: Course }) {
                       onChange={(e) => setPrice(e.target.value)}
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="file">Course Image</Label>
+                    <Input
+                      id="file"
+                      name="file"
+                      type="file"
+                      accept="image/*"
+                      required
+                      className="mt-1"
+                      onChange={handleFileChange}
+                    />
+                  </div>
+                  <div></div>
                 </div>
                 <DialogFooter className="mt-6">
                   <Button type="submit">Save changes</Button>

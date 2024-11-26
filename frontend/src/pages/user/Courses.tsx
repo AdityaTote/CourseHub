@@ -12,6 +12,12 @@ import { Button } from "@/components/ui/button";
 import { BACKEND_URL } from "@/utils";
 import { CourseSkeleton } from "@/components/CourseSkeleton";
 import { useFetch } from "@/hooks/useFetch";
+import { Input } from "@/components/ui/input";
+import { useEffect, useState } from "react";
+import useDebounce from "@/hooks/useDebounce";
+import axios from "axios";
+import { useRecoilState } from "recoil";
+import { searchCourseAtom } from "@/store/atom";
 
 interface Course {
   id: string;
@@ -27,6 +33,23 @@ interface Course {
 
 export function Courses() {
   const { data, loading, error } = useFetch(`${BACKEND_URL}/api/v1/course/preview`, false);
+  const [isSearch, setIsSearch] = useState<boolean>(false); 
+  const [search, setSearch] = useState<string>("");
+  const [searchData, setSearchData] = useRecoilState(searchCourseAtom);
+
+  const debounceVal = useDebounce(search, 500)
+
+  useEffect(() => {
+    if(debounceVal){
+      const fetchData = async () => {
+        const response = await axios.get(`${BACKEND_URL}/api/v1/course/search?search=${debounceVal}`);
+        const data = response.data.data;
+        setIsSearch(true);
+        setSearchData(data);
+      }
+      fetchData();
+    }
+  }, [debounceVal, setSearchData])
 
  
 
@@ -37,24 +60,16 @@ export function Courses() {
       </Layout>
     );
   } else if(data){
+
     return (
       <Layout>
-        <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
-            Available Courses
-          </h1>
-          {data && data.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {data.map((course: Course) => (
-                <CourseCard course={course}/>
-              ))}
-            </div>
-          ) : (
-            <div className="flex justify-center items-center min-h-[50vh]">
-              <p className="text-xl text-gray-500">No courses available</p>
-            </div>
-          )}
+      <div className={"flex justify-center items-center mt-16"}>
+        <div className={"bg-white border-1 rounded-md w-96"}>
+          <Input className="outline-none" placeholder="Search Course..." onChange={(e) => setSearch(e.target.value)} />
         </div>
+      </div>
+      {isSearch && searchData && searchData.length > 0 ? (<CourseDisplay  data={searchData}/>) : <CourseDisplay data={data}/>}
+        
       </Layout>
     );
   } else {
@@ -66,6 +81,27 @@ export function Courses() {
       </Layout>
     );
   }
+}
+
+function CourseDisplay({data}: {data: Course[]}) {
+  return(
+    <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+          <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
+            Courses
+          </h1>
+          {data && data.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {data.map((course: Course) => (
+                <CourseCard key={course.id} course={course}/>
+              ))}
+            </div>
+          ) : (
+            <div className="flex justify-center items-center min-h-[50vh]">
+              <p className="text-xl text-gray-500">No courses available</p>
+            </div>
+          )}
+        </div>
+  );
 }
 
 

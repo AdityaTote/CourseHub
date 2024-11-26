@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
@@ -11,12 +11,12 @@ import useUserAuth from "@/hooks/useUserAuth";
 export function Register() {
   const { isAuthenticated } = useUserAuth();
   const navigate = useNavigate();
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const lastNameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
   if (isAuthenticated) {
     navigate("/admin");
@@ -24,6 +24,10 @@ export function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const firstName = firstNameRef.current?.value;
+    const lastName = lastNameRef.current?.value;
+    const email = emailRef.current?.value;
+    const password = passwordRef.current?.value;
     try {
       const response = await axios.post(
         "http://localhost:3030/api/v1/auth/user/register",
@@ -36,10 +40,6 @@ export function Register() {
       );
 
       if (response.status === 201) {
-        setEmail("");
-        setPassword("");
-        setFirstName("");
-        setLastName("");
         setMessage(response.data.message);
         setIsError(false);
         navigate("/login");
@@ -55,7 +55,7 @@ export function Register() {
   };
 
   return (
-    <Layout login="/login" register="/register">
+    <Layout>
       <div className="max-w-md mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
         <div className="bg-white p-8 shadow rounded-lg">
           <h2 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">
@@ -80,8 +80,7 @@ export function Register() {
                 autoComplete="name"
                 required
                 className="mt-1"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                ref={firstNameRef}
               />
             </div>
             <div>
@@ -93,8 +92,7 @@ export function Register() {
                 autoComplete="name"
                 required
                 className="mt-1"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                ref={lastNameRef}
               />
             </div>
             <div>
@@ -106,8 +104,7 @@ export function Register() {
                 autoComplete="email"
                 required
                 className="mt-1"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                ref={emailRef}
               />
             </div>
             <div>
@@ -119,8 +116,7 @@ export function Register() {
                 autoComplete="new-password"
                 required
                 className="mt-1"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                ref={passwordRef}
               />
             </div>
             <div>

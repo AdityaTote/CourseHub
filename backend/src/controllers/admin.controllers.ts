@@ -258,13 +258,13 @@ const handleCourseUpdate = async (req: any, res: Response) => {
       return res.status(400).json({ error: courseData.error });
     }
 
-    const { title, description, price } = courseData.data;
+    const { title, description, price, imageURL } = courseData.data;
 
-    
     const courseInputData: {
       title?: string;
       description?: string;
       price?: string;
+      imageURL?: string;
     } = {};
 
     if (title) {
@@ -277,6 +277,10 @@ const handleCourseUpdate = async (req: any, res: Response) => {
 
     if (description) {
       courseInputData.description = description;
+    }
+
+    if (imageURL) {
+      courseInputData.imageURL = imageURL;
     }
 
     const updatedCourse = await Course.update({
