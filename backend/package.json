@@ -7,7 +7,7 @@
     "build": "tsc",
     "dev": "npm run build && npm run start",
     "generate": "prisma generate",
-    "migrate": "prisma migrate dev",
+    "migrate": "prisma migrate dev && npm run generate",
     "studio": "prisma studio"
   },
   "keywords": [],

@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { Layout } from "@/components/Layout";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +8,7 @@ import useAdminAuth from "@/hooks/useAdminAuth";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { BACKEND_URL, CLOUDFRONT_URL } from "@/utils";
+import { AdminLayout } from "@/components/AdminLayout";
 
 export function AddCourse() {
   const navigate = useNavigate();
@@ -94,7 +94,7 @@ export function AddCourse() {
   };
 
   return (
-    <Layout >
+    <AdminLayout >
       <div className="max-w-3xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
           Add New Course
@@ -173,6 +173,6 @@ export function AddCourse() {
           </div>
         </form>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

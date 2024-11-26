@@ -1,8 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Layout } from "../../components/Layout";
 import { Button } from "../../components/ui/button";
 import useAdminAuth from "@/hooks/useAdminAuth";
-// import { useEffect } from "react";
+import { AdminLayout } from "@/components/AdminLayout";
 
 export function AdminDashboard() {
 
@@ -16,8 +15,8 @@ export function AdminDashboard() {
 
 
   return (
-    <Layout login="/admin/login" register="/admin/register">
-      <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto py-16 px-4 sm:py-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
           Admin Dashboard
         </h1>
@@ -33,6 +32,6 @@ export function AdminDashboard() {
           </Link>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

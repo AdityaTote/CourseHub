@@ -1,22 +1,26 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import axios from "axios";
 import useAdminAuth from "@/hooks/useAdminAuth";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { BACKEND_URL } from "@/utils";
+import { AdminLayout } from "@/components/AdminLayout";
 
 export function AdminRegistration() {
   const { isAuthenticated } = useAdminAuth();
   const navigate = useNavigate();
 
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const firstNameRef = useRef<HTMLInputElement>(null);
+  const lastNameRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passRef = useRef<HTMLInputElement>(null);
+  const confirmPassRef = useRef<HTMLInputElement>(null);
+  const wallet = useWallet();
+
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
 
@@ -26,6 +30,14 @@ export function AdminRegistration() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!wallet.publicKey) {
+      setMessage(`Wallet is not Connected!`);
+    }
+    const firstName = firstNameRef.current?.value;
+    const lastName = lastNameRef.current?.value;
+    const email = emailRef.current?.value;
+    const password = passRef.current?.value;
+    const confirmPassword = confirmPassRef.current?.value;
 
     if (password !== confirmPassword) {
       setMessage("Passwords do not match");
@@ -35,11 +47,12 @@ export function AdminRegistration() {
 
     try {
       const response = await axios.post(
-        "http://localhost:3030/api/v1/admin/register",
+        `${BACKEND_URL}/api/v1/admin/register`,
         {
           firstName: firstName,
           lastName: lastName,
           email: email,
+          address: wallet.publicKey?.toString(),
           password: confirmPassword,
         }
       );
@@ -47,11 +60,6 @@ export function AdminRegistration() {
       if (response) {
         setMessage(response.data.message);
         setIsError(false);
-        setFirstName("");
-        setLastName("");
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
         navigate("/admin/login");
       } else {
         setMessage(response.data.error);
@@ -65,8 +73,9 @@ export function AdminRegistration() {
   };
 
   return (
-    <Layout login="/admin/login" register="/admin/register">
-      <div className="max-w-md mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+    <AdminLayout>
+     
+      <div className="max-w-md mx-auto py-16 px-4 sm:py-4 sm:px-6 lg:px-8">
         <div className="bg-white p-8 shadow rounded-lg">
           <h2 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">
             Admin Registration
@@ -92,8 +101,7 @@ export function AdminRegistration() {
                 type="text"
                 required
                 className="mt-1"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                ref={firstNameRef}
               />
             </div>
             <div>
@@ -104,8 +112,7 @@ export function AdminRegistration() {
                 type="text"
                 required
                 className="mt-1"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                ref={lastNameRef}
               />
             </div>
             <div>
@@ -117,8 +124,7 @@ export function AdminRegistration() {
                 autoComplete="email"
                 required
                 className="mt-1"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                ref={emailRef}
               />
             </div>
             <div>
@@ -130,8 +136,7 @@ export function AdminRegistration() {
                 autoComplete="new-password"
                 required
                 className="mt-1"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                ref={passRef}
               />
             </div>
             <div>
@@ -143,8 +148,7 @@ export function AdminRegistration() {
                 autoComplete="new-password"
                 required
                 className="mt-1"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                ref={confirmPassRef}
               />
             </div>
 
@@ -167,6 +171,6 @@ export function AdminRegistration() {
           </div>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }

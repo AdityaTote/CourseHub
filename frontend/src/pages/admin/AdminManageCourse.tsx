@@ -1,5 +1,3 @@
-// import { adminCourseAtom } from "@/store/atom";
-// import { useRecoilValueLoadable } from "recoil";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,10 +23,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { PencilIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { Layout } from "@/components/Layout";
 import { useFetch } from "@/hooks/useFetch";
 import { BACKEND_URL, CLOUDFRONT_URL } from "@/utils";
 import { CourseSkeleton } from "@/components/CourseSkeleton";
+import { AdminLayout } from "@/components/AdminLayout";
 
 type Course = {
   id: string;
@@ -48,15 +46,15 @@ export function AdminManageCourses() {
     return <CourseSkeleton />;
   } else if (error) {
     return (
-      <Layout>
+      <AdminLayout>
         <div className="flex justify-center items-center min-h-screen">
           <div className="loader"></div>
         </div>
-      </Layout>
+      </AdminLayout>
     );
   } else if (data) {
     return (
-      <Layout>
+      <AdminLayout>
         <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-extrabold text-gray-900">
@@ -73,7 +71,7 @@ export function AdminManageCourses() {
               ))}
           </div>
         </div>
-      </Layout>
+      </AdminLayout>
     );
   }
 }

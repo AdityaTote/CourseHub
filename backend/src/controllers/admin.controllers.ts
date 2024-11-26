@@ -10,11 +10,13 @@ const userSchema = z.object({
   password: z.string().min(6),
   firstName: z.string(),
   lastName: z.string(),
+  address: z.string(),
 });
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z.string().min(6),
+  address: z.string(),
 });
 
 const courseSchema = z.object({
@@ -36,9 +38,9 @@ const handleAdminRegister = async (req: Request, res: Response) => {
     return res.status(400).json({ error: userData.error });
   }
 
-  const { email, password, firstName, lastName } = userData.data;
+  const { email, password, firstName, lastName, address } = userData.data;
 
-  if (!email || !password || !firstName || !lastName) {
+  if (!email || !password || !firstName || !lastName || !address) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -68,6 +70,7 @@ const handleAdminRegister = async (req: Request, res: Response) => {
       firstName: firstName,
       lastName: lastName,
       password: hashedPass,
+      address: address,
     }
   });
 
@@ -89,16 +92,17 @@ const handleAdminLogin = async (req: Request, res: Response) => {
       return res.status(400).json({ error: userData.error });
     }
 
-    const { email, password } = userData.data;
+    const { email, password, address } = userData.data;
 
-    if (!email || !password) {
+    if (!email || !password || !address) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     //   check user already exists or not
     const userExists = await Admin.findFirst({
       where: {
-        email: email
+        email: email,
+        address: address,
       },
     });
 

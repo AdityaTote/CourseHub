@@ -1,12 +1,13 @@
 import React, { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Layout } from "../../components/Layout";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
 import axios from "axios";
 import useAdminAuth from "@/hooks/useAdminAuth";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { AdminLayout } from "@/components/AdminLayout";
 
 export function AdminLogin() {
   const { isAuthenticated } = useAdminAuth();
@@ -15,19 +16,26 @@ export function AdminLogin() {
   const passRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
+  const wallet = useWallet();
 
-  if(isAuthenticated) {
+  if (isAuthenticated) {
     navigate("/admin");
-}
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!wallet.publicKey) {
+      setMessage(`Wallet is not Connected!`);
+      setIsError(true);
+      return;
+    }
     try {
       const response = await axios.post(
         "http://localhost:3030/api/v1/admin/login",
         {
           email: emailRef.current?.value,
           password: passRef.current?.value,
+          address: wallet.publicKey?.toString(),
         },
         { withCredentials: true }
       );
@@ -49,8 +57,9 @@ export function AdminLogin() {
   };
 
   return (
-    <Layout login="/admin/login" register="/admin/register">
-      <div className="max-w-md mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+    <AdminLayout>
+      
+      <div className="max-w-md mx-auto py-16 px-4 sm:py-4 sm:px-6 lg:px-8">
         <div className="bg-white p-8 shadow rounded-lg">
           <h2 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">
             Admin Login
@@ -102,17 +111,20 @@ export function AdminLogin() {
             </div>
           </form>
           <div className="mt-4 text-center">
-            <Link to="/admin/register" className="text-sm text-blue-600 hover:underline">
+            <Link
+              to="/admin/register"
+              className="text-sm text-blue-600 hover:underline"
+            >
               Admin Register
             </Link>
           </div>
           <div className="mt-4 text-center">
-            <Link to="/login" className="text-sm text-blue-600 hover:underline">
+            <Link to="/user/login" className="text-sm text-blue-600 hover:underline">
               User Login
             </Link>
           </div>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 }
