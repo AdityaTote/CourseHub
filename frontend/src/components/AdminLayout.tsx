@@ -24,6 +24,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       userLogout();
     } else if (isAdminAuthenticated) {
       adminLogout();
+      wallet.disconnect();
     }
   };
 

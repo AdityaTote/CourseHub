@@ -1,6 +1,14 @@
 import { Response } from "express";
-import { Course } from "../db/db";
+import * as z from "zod";
+import { Course, Purchase, prisma } from "../db/db";
+import { verifyTransaction } from "../utils/checkTransaction.utils";
 
+const purchasedCourseSchema = z.object({
+  address: z.string(),
+  signature: z.string(),
+  amount: z.string(),
+  adminId: z.string(),
+})
 
 export const handleCoursesPreview = async (req: any, res: Response) => {
   try {
@@ -38,54 +46,162 @@ export const handleCoursesPreview = async (req: any, res: Response) => {
   }
 };
 
-// export const handleCoursePurchase = async (req: any, res: Response) => {
-//   try {
-//     const user = req.user;
+export const handleCheckExistingCourse = async(req: any, res: Response) => {
+  
+  const user = req.user;
 
-//     if (!user) {
-//       return res.status(401).json({
-//         error: "Unauthorized",
-//       });
-//     }
+  if (!user) {
+    return res.status(401).json({
+      error: "Unauthorized",
+    });
+  }
 
-//     const { courseId } = req.body;
+  const courseId = req.params.id;
 
-//     if (!courseId) {
-//       return res.status(400).json({
-//         error: "Missing required fields",
-//       });
-//     }
+  if(!courseId){
+    return res.status(400).json({
+      error: "courseId is missing"
+    })
+  }
 
-//     const course = await Course.findById(courseId);
+  const course = await Course.findFirst({
+    where: {
+      id: courseId,
+    }
+  });
 
-//     if (!course) {
-//       return res.status(404).json({
-//         error: "Course not found",
-//       });
-//     }
+  if (!course) {
+    return res.status(404).json({
+      error: "Course not found",
+      data: {
+        isPurchased: true
+      }
+    });
+  }
 
-//     const purchasedCourse = await PurchasedCourse.create({
-//       courseId,
-//       userId: user.id,
-//     });
+  const existingPurchase = await Purchase.findFirst({
+    where: {
+      courseId,
+      userId: user.id,
+    }
+  })
 
-//     if (!purchasedCourse) {
-//       return res.status(500).json({
-//         error: "Error in purchasing course",
-//       });
-//     }
+  if (existingPurchase) {
+    return res.status(400).json({
+      error: "Course already purchased",
+      data: {
+        isPurchased: false
+      }
+    });
+  }
 
-//     return res.status(201).json({
-//       message: "Course purchased successfully",
-//       data: purchasedCourse,
-//     });
-//   } catch (error: any) {
-//     console.log(error);
-//     return res.status(500).json({
-//       error: error.message,
-//     });
-//   }
-// };
+  return res.status(200).json({
+    message: "Course not purchased",
+    data: {
+      isPurchased: true,
+      adminId: course.createrId
+    }
+  });
+
+}
+
+export const handleCoursePurchase = async (req: any, res: Response) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({
+        error: "Unauthorized",
+      });
+    }
+
+    const courseId = req.params.id;
+
+    if(!courseId){
+      return res.status(400).json({
+        error: "courseId is missing"
+      })
+    }
+
+    const purchasedCourseData = purchasedCourseSchema.safeParse(req.body);
+
+    if (!purchasedCourseData.success) {
+      return res.status(400).json({ error: purchasedCourseData.error });
+    }
+
+    const { address, amount, signature, adminId } = purchasedCourseData.data;
+
+    if (!address || !amount || !signature || !adminId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+   const confirm = await verifyTransaction(signature, address);
+
+   console.log(confirm)
+
+   if(!confirm){
+      return res.status(400).json({
+        error: "Transaction verification failed"
+   })
+    };
+
+    const { transaction, balance, purchasedCourse } = await prisma.$transaction(async (tx) => {
+      // Step 1: Create a new transaction record
+      const transaction = await tx.transaction.create({
+        data: {
+          address,
+          amount,
+          signature,
+          courseId,
+          userId: user.id, // assuming `user.id` is defined
+        },
+      });
+    
+      // Step 2: Upsert the balance record for the admin
+      const balance = await tx.balance.upsert({
+        where: {
+          adminId: adminId,
+        },
+        update: {
+          pendingAmount: {
+            increment: Number(amount), // Increment existing balance
+          },
+        },
+        create: {
+          adminId: adminId, // Create new balance entry
+          pendingAmount: Number(amount), // Initialize with the given amount
+          lockedAmount: 0, // Initialize with 0
+        },
+      });
+    
+      // Step 3: Create a purchase record linked to the transaction
+      const purchasedCourse = await tx.purchase.create({
+        data: {
+          courseId: courseId,
+          userId: user.id,
+          transactionId: transaction.id, // Reference the transaction created above
+        },
+      });
+    
+      // Return the results of all operations
+      return {
+        transaction,
+        balance,
+        purchasedCourse,
+      };
+    });
+
+    return res.status(201).json({
+      message: "Course purchased successfully",
+      data: purchasedCourse,
+    });
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+};
 
 export const handleCourseDetail = async (req: any, res: Response) => {
   try {
@@ -96,8 +212,6 @@ export const handleCourseDetail = async (req: any, res: Response) => {
         error: "Invalid id",
       });
     }
-
-    console.log(id)
 
     const course = await Course.findFirst({
       where: {
@@ -117,8 +231,6 @@ export const handleCourseDetail = async (req: any, res: Response) => {
         }
       }
     });
-
-    console.log(course)
 
     if (!course) {
       return res.status(404).json({

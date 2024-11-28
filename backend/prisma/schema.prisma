@@ -75,8 +75,8 @@ model Transaction {
 
 model Balance {
   id            String   @id @unique @default(uuid())
-  pendingAmount String
-  lockedAmount  String
+  pendingAmount Float
+  lockedAmount  Float
   adminId       String   @unique
   admin         Admin    @relation(fields: [adminId], references: [id])
   createdAt     DateTime @default(now())

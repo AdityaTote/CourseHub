@@ -2,16 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { RadioGroup, RadioGroupItem } from "../../components/ui/radio-group";
 import useUserAuth from "@/hooks/useUserAuth";
-import {
-  WalletDisconnectButton,
-  WalletMultiButton,
-} from "@solana/wallet-adapter-react-ui";
 import { useFetch } from "@/hooks/useFetch";
-import { BACKEND_URL } from "@/utils";
+import { BACKEND_URL, PARENT_WALLET_ADDRESS } from "@/utils";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { ConnectWallet } from "@/components/ConnectWallet";
+import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import axios from "axios";
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-screen">
@@ -21,15 +20,20 @@ const LoadingSpinner = () => (
 );
 
 export function Payment() {
+  const { connection } = useConnection();
+  const wallet = useWallet();
   const navigate = useNavigate();
   const { isAuthenticated } = useUserAuth();
   const { id } = useParams<{ id: string }>();
+  const [ message, setMessage ] = useState<string>("")
   const [paymentMethod, setPaymentMethod] = useState("ethereum");
-  const { data, loading, error } = useFetch(`${BACKEND_URL}/api/v1/course/preview/${id}`);
+  const { data, loading, error } = useFetch(
+    `${BACKEND_URL}/api/v1/course/preview/${id}`
+  );
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      navigate("/login");
+      navigate("/user/login");
     }
   }, [isAuthenticated, loading, navigate]);
 
@@ -41,26 +45,66 @@ export function Payment() {
     return null; // or a message indicating the user is being redirected
   }
 
-  if(data){
-    const handleSubmit = (e: React.FormEvent) => {
+  if (data) {
+    const handleSubmit = async(e: React.FormEvent) => {
       e.preventDefault();
-      // Handle payment logic here
+      if(!wallet.publicKey){
+        setMessage(`Wallet is not connected!`)
+        return;
+      }
+
+      const resOne = await axios.get(`${BACKEND_URL}/api/v1/course/${data.id}`,{
+        withCredentials: true,
+      })
+
+      if(resOne.data.data.isPurchased === true){
+        const transaction = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: wallet.publicKey,
+            toPubkey: new PublicKey(PARENT_WALLET_ADDRESS),
+            lamports: Number(data.price) * LAMPORTS_PER_SOL,
+          })
+        );
+  
+        const response = await wallet.sendTransaction(transaction, connection);
+  
+        if (response) {
+          const resTwo = await axios.post(`${BACKEND_URL}/api/v1/course/purchased/${data.id}`,{
+            address: wallet.publicKey.toString(),
+            amount: data.price,
+            signature: response,
+            adminId: resOne.data.data.adminId
+          },{ withCredentials: true })
+
+          if(resTwo){
+            alert("Transaction successful!")
+            setMessage(`Transaction successful!`)
+            return;
+          }
+        } else {
+          setMessage("Transaction failed");
+          return;
+        }  
+      } else {
+        setMessage(`You have already purchased this course!`)
+        return;
+      }
+
     };
     return (
       <Layout>
-        <div className="flex justify-between p-4">
-          <div className="">
-            <WalletMultiButton />
-          </div>
-          <WalletDisconnectButton />
+        <div className="flex justify-center p-10">
+          <ConnectWallet wallet={wallet} />
         </div>
-        <div className="max-w-3xl mx-auto py-16 px-4 sm:py-16 sm:px-6 lg:px-">
+        <div className="max-w-3xl mx-auto px-4  sm:px-6 lg:px-">
           <div className="bg-white shadow rounded-lg p-8">
             <h1 className="text-3xl font-extrabold text-gray-900 mb-6">
               Payment for {data.title}
             </h1>
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Amount Due</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">
+                Amount Due
+              </h2>
               <p className="text-3xl font-bold text-blue-600">
                 {data.price} SOL
               </p>
@@ -86,16 +130,6 @@ export function Payment() {
                 </RadioGroup>
               </div>
               <div>
-                <Label htmlFor="wallet-address">Your Wallet Address</Label>
-                <Input
-                  id="wallet-address"
-                  name="wallet-address"
-                  type="text"
-                  required
-                  className="mt-1"
-                />
-              </div>
-              <div>
                 <Button
                   type="submit"
                   className="w-full bg-blue-600 text-white hover:bg-blue-700"
@@ -114,5 +148,5 @@ export function Payment() {
         </div>
       </Layout>
     );
-  } 
+  }
 }

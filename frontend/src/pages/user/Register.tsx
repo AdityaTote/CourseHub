@@ -42,7 +42,7 @@ export function Register() {
       if (response.status === 201) {
         setMessage(response.data.message);
         setIsError(false);
-        navigate("/login");
+        navigate("/user/login");
       } else {
         setMessage(response.data.error);
         setIsError(true);

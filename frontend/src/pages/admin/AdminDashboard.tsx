@@ -7,12 +7,10 @@ export function AdminDashboard() {
 
   const { isAuthenticated } = useAdminAuth();
   const navigate = useNavigate();
-  
-  
+
     if(!isAuthenticated){
       navigate("/admin/login")
     }
-
 
   return (
     <AdminLayout>

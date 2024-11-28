@@ -95,7 +95,7 @@ export function AddCourse() {
 
   return (
     <AdminLayout >
-      <div className="max-w-3xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
           Add New Course
         </h1>

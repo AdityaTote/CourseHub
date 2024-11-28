@@ -2,7 +2,8 @@
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "name" TEXT,
+    "firstName" TEXT,
+    "lastName" TEXT,
     "password" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -14,7 +15,9 @@ CREATE TABLE "User" (
 CREATE TABLE "Admin" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "name" TEXT,
+    "firstName" TEXT,
+    "lastName" TEXT,
+    "address" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -65,13 +68,25 @@ CREATE TABLE "Transaction" (
 -- CreateTable
 CREATE TABLE "Balance" (
     "id" TEXT NOT NULL,
-    "pendingAmount" TEXT NOT NULL,
-    "lockedAmount" TEXT NOT NULL,
+    "pendingAmount" DOUBLE PRECISION NOT NULL,
+    "lockedAmount" DOUBLE PRECISION NOT NULL,
     "adminId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Balance_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AdminTransaction" (
+    "id" TEXT NOT NULL,
+    "tansactionId" TEXT NOT NULL,
+    "adminId" TEXT NOT NULL,
+    "amount" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "AdminTransaction_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -93,6 +108,9 @@ CREATE UNIQUE INDEX "Course_id_key" ON "Course"("id");
 CREATE UNIQUE INDEX "Purchase_id_key" ON "Purchase"("id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Purchase_transactionId_key" ON "Purchase"("transactionId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Transaction_id_key" ON "Transaction"("id");
 
 -- CreateIndex
@@ -101,8 +119,17 @@ CREATE UNIQUE INDEX "Balance_id_key" ON "Balance"("id");
 -- CreateIndex
 CREATE UNIQUE INDEX "Balance_adminId_key" ON "Balance"("adminId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "AdminTransaction_id_key" ON "AdminTransaction"("id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AdminTransaction_tansactionId_key" ON "AdminTransaction"("tansactionId");
+
 -- AddForeignKey
 ALTER TABLE "Course" ADD CONSTRAINT "Course_createrId_fkey" FOREIGN KEY ("createrId") REFERENCES "Admin"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "Transaction"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -118,3 +145,6 @@ ALTER TABLE "Transaction" ADD CONSTRAINT "Transaction_userId_fkey" FOREIGN KEY (
 
 -- AddForeignKey
 ALTER TABLE "Balance" ADD CONSTRAINT "Balance_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "Admin"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "AdminTransaction" ADD CONSTRAINT "AdminTransaction_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "Admin"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

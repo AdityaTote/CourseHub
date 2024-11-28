@@ -19,10 +19,11 @@ import {
   AdminManageCourses,
 } from "./pages/index.pages";
 import { RecoilRoot } from "recoil";
+import { SOLANA_RPC_URL } from "./utils/index";
 
 function App() {
   return (
-    <ConnectionProvider endpoint={"https://api.devnet.solana.com"}>
+    <ConnectionProvider endpoint={SOLANA_RPC_URL}>
       <WalletProvider wallets={[]} autoConnect>
         <WalletModalProvider>
           <RecoilRoot>

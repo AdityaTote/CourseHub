@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node  dist/src/index.js",
-    "build": "tsc",
+    "build": "tsc -b",
     "dev": "npm run build && npm run start",
     "generate": "prisma generate",
     "migrate": "prisma migrate dev && npm run generate",
@@ -19,6 +19,7 @@
     "@aws-sdk/s3-presigned-post": "^3.693.0",
     "@aws-sdk/s3-request-presigner": "^3.693.0",
     "@prisma/client": "^5.22.0",
+    "@solana/web3.js": "^1.95.5",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.5.0",
     "cookie-parser": "^1.4.6",
@@ -27,6 +28,7 @@
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
+    "tweetnacl": "^1.0.3",
     "typescript": "^5.6.2",
     "zod": "^3.23.8"
   },

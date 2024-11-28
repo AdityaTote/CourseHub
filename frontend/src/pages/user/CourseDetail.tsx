@@ -61,7 +61,6 @@ export function CourseDetail() {
                 <p className="text-3xl font-bold text-blue-600 mb-2">
                  $ {data?.price}
                 </p>
-                <p className="text-gray-500 mb-6">Duration: {data?.duration}</p>
                 <Link to={`/payment/${data?.id}`}>
                   <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
                     Enroll Now
