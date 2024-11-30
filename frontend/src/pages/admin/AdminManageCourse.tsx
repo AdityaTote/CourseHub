@@ -27,14 +27,10 @@ import { useFetch } from "@/hooks/useFetch";
 import { BACKEND_URL, CLOUDFRONT_URL } from "@/utils";
 import { CourseSkeleton } from "@/components/CourseSkeleton";
 import { AdminLayout } from "@/components/AdminLayout";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Course } from "@/types";
 
-type Course = {
-  id: string;
-  title: string;
-  description: string;
-  imageURL: string;
-  price: string;
-};
+
 
 export function AdminManageCourses() {
   const { data, loading, error } = useFetch(
@@ -67,7 +63,7 @@ export function AdminManageCourses() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {data &&
               data.map((course: Course) => (
-                <Course key={course.id} course={course} />
+                <Courses key={course.id} course={course} />
               ))}
           </div>
         </div>
@@ -76,9 +72,8 @@ export function AdminManageCourses() {
   }
 }
 
-function Course({ course }: { course: Course }) {
-  const [courses, setCourses] = useState<any[]>([]);
-  const [editingCourse, setEditingCourse] = useState(null);
+function Courses({ course }: { course: Course }) {
+  const [courses, setCourses] = useState<Course[]>([]);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [price, setPrice] = useState<string>("");
@@ -91,8 +86,7 @@ function Course({ course }: { course: Course }) {
     return description.slice(0, 100);
   };
 
-  const handleEdit = async (course: any) => {
-    setEditingCourse(course);
+  const handleEdit = async (course: Course) => {
     setTitle(course.title);
     setDescription(course.description);
     setPrice(course.price);
@@ -103,7 +97,7 @@ function Course({ course }: { course: Course }) {
 
   // };
 
-  const handleFileChange = async(e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const file = e.target.files?.[0];
       const response = await axios.get(`${BACKEND_URL}/api/v1/presignedUrl`, {
@@ -111,9 +105,12 @@ function Course({ course }: { course: Course }) {
       });
       const presignedUrl = response.data.preSignedUrl;
       const formData = new FormData();
-      formData.set("bucket", response.data.fields["bucket"])
+      formData.set("bucket", response.data.fields["bucket"]);
       formData.set("X-Amz-Algorithm", response.data.fields["X-Amz-Algorithm"]);
-      formData.set("X-Amz-Credential", response.data.fields["X-Amz-Credential"]);
+      formData.set(
+        "X-Amz-Credential",
+        response.data.fields["X-Amz-Credential"]
+      );
       formData.set("X-Amz-Date", response.data.fields["X-Amz-Date"]);
       formData.set("key", response.data.fields["key"]);
       formData.set("Policy", response.data.fields["Policy"]);
@@ -125,28 +122,29 @@ function Course({ course }: { course: Course }) {
       if (!awsResponse) {
         throw new Error("Failed to upload image to S3");
       }
-      const urlPath = `${CLOUDFRONT_URL}/${response.data.fields["key"]}`
-      setImgUrl(urlPath)
-  } catch(e) {
-      console.log(e)
-  }
+      const urlPath = `${CLOUDFRONT_URL}/${response.data.fields["key"]}`;
+      setImgUrl(urlPath);
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   const handleSave = async (updatedCourse: {
-    id: string | number;
-    title: string;
-    description: string;
-    price: string;
-    imageURL: string;
-  }) => {
+      id: string;
+      title?: string;
+      description?: string;
+      price?: string;
+      imageURL?: string;
+    }) => {
     try {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("description", description);
       formData.append("price", price);
+      formData.append("imageURL", imgUrl);
 
       const response = await axios.patch(
-        `http://localhost:3030/api/v1/admin/course/${updatedCourse._id}`,
+        `http://localhost:3030/api/v1/admin/course/${updatedCourse.id}`,
         formData,
         {
           withCredentials: true,
@@ -158,14 +156,15 @@ function Course({ course }: { course: Course }) {
         setMessage(response.data.message);
         setCourses(
           courses.map((course) =>
-            course.id === updatedCourse.id ? updatedCourse : course
+            course.id === updatedCourse.id
+              ? { ...course, ...updatedCourse }
+              : course
           )
         );
         setIsError(false);
-        setEditingCourse(null);
         setIsDialogOpen(false);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.log(error.response.data.error);
       setMessage(error.response.data.error);
       setIsError(true);
@@ -173,6 +172,12 @@ function Course({ course }: { course: Course }) {
   };
   return (
     <div>
+      {message && (
+        <Alert variant={isError ? "destructive" : "default"} className="mb-4">
+          <AlertTitle>{isError ? "Error" : "Success"}</AlertTitle>
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
       <Card key={course.id} className="flex flex-col justify-between">
         <CardHeader>
           <CardTitle>{course.title}</CardTitle>

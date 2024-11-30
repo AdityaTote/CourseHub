@@ -2,31 +2,39 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { Button } from "../../components/ui/button";
-import { Label } from "../../components/ui/label";
-import { RadioGroup, RadioGroupItem } from "../../components/ui/radio-group";
 import useUserAuth from "@/hooks/useUserAuth";
 import { useFetch } from "@/hooks/useFetch";
 import { BACKEND_URL, PARENT_WALLET_ADDRESS } from "@/utils";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import {
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
 import axios from "axios";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CourseResponse } from "@/types";
 
-const LoadingSpinner = () => (
-  <div className="flex justify-center items-center h-screen">
-    <div className="-mx-24">loading...</div>
-    <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-600"></div>
-  </div>
-);
+
 
 export function Payment() {
   const { connection } = useConnection();
+  const naviagte = useNavigate()
   const wallet = useWallet();
   const navigate = useNavigate();
   const { isAuthenticated } = useUserAuth();
   const { id } = useParams<{ id: string }>();
-  const [ message, setMessage ] = useState<string>("")
-  const [paymentMethod, setPaymentMethod] = useState("ethereum");
+  const [message, setMessage] = useState<string>("");
   const { data, loading, error } = useFetch(
     `${BACKEND_URL}/api/v1/course/preview/${id}`
   );
@@ -42,22 +50,40 @@ export function Payment() {
   }
 
   if (!isAuthenticated) {
-    return null; // or a message indicating the user is being redirected
+    naviagte("/user/login");
+    return null;
   }
 
   if (data) {
-    const handleSubmit = async(e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      if(!wallet.publicKey){
-        setMessage(`Wallet is not connected!`)
-        return;
-      }
-
-      const resOne = await axios.get(`${BACKEND_URL}/api/v1/course/${data.id}`,{
-        withCredentials: true,
-      })
-
-      if(resOne.data.data.isPurchased === true){
+      setMessage("");
+      
+      try {
+        // Validate wallet connection
+        if (!wallet.publicKey) {
+          setMessage("Please connect your wallet first");
+          return;
+        }
+    
+        // Validate data exists
+        if (!data?.id || !data.price) {
+          setMessage("Invalid course data");
+          return;
+        }
+    
+        // Check if course is already purchased
+        const { data: courseData }: { data: CourseResponse } = await axios.get(
+          `${BACKEND_URL}/api/v1/user/course/${data.id}`,
+          { withCredentials: true }
+        );
+    
+        if (courseData.data.isPurchased) {
+          setMessage("You have already purchased this course");
+          return;
+        }
+    
+        // Create and send transaction
         const transaction = new Transaction().add(
           SystemProgram.transfer({
             fromPubkey: wallet.publicKey,
@@ -65,88 +91,111 @@ export function Payment() {
             lamports: Number(data.price) * LAMPORTS_PER_SOL,
           })
         );
-  
-        const response = await wallet.sendTransaction(transaction, connection);
-  
-        if (response) {
-          const resTwo = await axios.post(`${BACKEND_URL}/api/v1/course/purchased/${data.id}`,{
-            address: wallet.publicKey.toString(),
-            amount: data.price,
-            signature: response,
-            adminId: resOne.data.data.adminId
-          },{ withCredentials: true })
-
-          if(resTwo){
-            alert("Transaction successful!")
-            setMessage(`Transaction successful!`)
-            return;
-          }
-        } else {
+    
+        // Send transaction
+        const signature = await wallet.sendTransaction(transaction, connection);
+        
+        if (!signature) {
           setMessage("Transaction failed");
           return;
-        }  
-      } else {
-        setMessage(`You have already purchased this course!`)
-        return;
+        }
+    
+        // Confirm transaction
+        const confirmation = await connection.confirmTransaction(signature);
+        if (!confirmation) {
+          setMessage("Transaction confirmation failed");
+          return;
+        }
+    
+        // Record purchase
+        const purchaseResponse = await axios.post(
+          `${BACKEND_URL}/api/v1/user/purchased/${data.id}`,
+          {
+            address: wallet.publicKey.toString(),
+            amount: data.price,
+            signature,
+            adminId: courseData.data.adminId,
+          },
+          { withCredentials: true }
+        );
+    
+        if (purchaseResponse.data) {
+          setMessage("Transaction successful!");
+          // Optional: Redirect to course page
+          // navigate(`/course/${data.id}`);
+        } else {
+          setMessage("Failed to record purchase");
+        }
+    
+      } catch (error: any) {
+        console.error("Payment error:", error);
+        setMessage(
+          error.response?.data?.error || 
+          error.message || 
+          "Transaction failed. Please try again."
+        );
       }
-
     };
     return (
       <Layout>
-        <div className="flex justify-center p-10">
-          <ConnectWallet wallet={wallet} />
-        </div>
-        <div className="max-w-3xl mx-auto px-4  sm:px-6 lg:px-">
-          <div className="bg-white shadow rounded-lg p-8">
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-6">
-              Payment for {data.title}
-            </h1>
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
-                Amount Due
-              </h2>
-              <p className="text-3xl font-bold text-blue-600">
-                {data.price} SOL
-              </p>
+        <div className={"h-screen bg-slate-200"}>
+          <div className="flex justify-center pt-4">
+            <ConnectWallet wallet={wallet} />
+          </div>
+          {message && (
+            <div className="flex justify-center">
+            <Alert
+              variant={"destructive"}
+              className="mt-4 w-96"
+            >
+              <AlertTitle>{"Error"}</AlertTitle>
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label className="text-lg font-medium text-gray-900">
-                  Select Payment Method
-                </Label>
-                <RadioGroup
-                  value={paymentMethod}
-                  onValueChange={setPaymentMethod}
-                  className="mt-2"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="ethereum" id="ethereum" />
-                    <Label htmlFor="ethereum">Ethereum (ETH)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="bitcoin" id="bitcoin" />
-                    <Label htmlFor="bitcoin">Bitcoin (BTC)</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <div>
-                <Button
-                  type="submit"
-                  className="w-full bg-blue-600 text-white hover:bg-blue-700"
-                >
-                  Confirm Payment
-                </Button>
-              </div>
-            </form>
-            <div className="mt-6">
-              <p className="text-sm text-gray-500">
-                By clicking "Confirm Payment", you agree to our terms of service
-                and privacy policy.
-              </p>
+          )}
+            <div className="flex justify-center pt-4">
+            <p className={`font-sans font-semibold text-xl`}>Complete Your Purchase</p>
             </div>
+          <div className="flex justify-center p-1">
+
+            <Card className={`w-[500px]`}>
+              <CardHeader>
+                <CardTitle className="text-xl">Purchasing {data.title}</CardTitle>
+                <CardDescription></CardDescription>
+              </CardHeader>
+              <div className="400">
+                <img
+                  src={data.imageURL}
+                  alt="course-image"
+                  width={400}
+                  className="h-64 w-400 object-cover mx-auto"
+                />
+              </div>
+              <CardContent>
+                <p className="text-2xl font-bold text-blue-600">
+                  $ {data.price}
+                </p>
+                <p className="text-sm text-gray-500 py-2">
+                  Created by: {data?.creater?.firstName}{" "}
+                  {data?.creater?.lastName}
+                </p>
+              </CardContent>
+              <CardFooter>
+                  <Button onClick={handleSubmit} className="w-full bg-blue-600 text-white hover:bg-blue-700">
+                    Pay
+                  </Button>
+              </CardFooter>
+            </Card>
           </div>
         </div>
       </Layout>
     );
   }
 }
+
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center h-screen">
+    <div className="-mx-24">loading...</div>
+    <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-600"></div>
+  </div>
+);

@@ -30,7 +30,7 @@ app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/presignedUrl",preSignedUrlRouter)
 // user routes
 app.use("/api/v1/secure/user", secureUserRoute);
-app.use("/api/v1/auth/user", userRoutes);
+app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/course", courseRoutes);
 
 export default app;

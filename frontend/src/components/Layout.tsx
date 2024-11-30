@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useUserAuth from "@/hooks/useUserAuth";
 import useAdminAuth from "@/hooks/useAdminAuth";
 import { Button } from "./ui/button";
@@ -9,18 +9,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NavLink } from "react-router-dom";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated: isUserAuthenticated, logout: userLogout } =
     useUserAuth();
   const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } =
     useAdminAuth();
+    const wallet = useWallet();
 
-  const handleLogout = () => {
+    const navigate = useNavigate();
+
+  const handleLogout = async() => {
     if (isUserAuthenticated) {
-      userLogout();
+      await userLogout();
+      if(wallet){
+        wallet.disconnect();
+      }
+      navigate("/");
     } else if (isAdminAuthenticated) {
-      adminLogout();
+      await adminLogout();
+      wallet.disconnect()
+      navigate("/");
     }
   };
 
@@ -41,7 +51,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {isAdminAuthenticated ? (
                   <CoursesLink to={"/admin/manage-courses"} />
                 ) : (
-                  <CoursesLink to={"/courses"} />
+                  <div className="flex items-centre">
+                    <CoursesLink to={"/courses"} />
+                    <Link to={`/user/courses`} className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"> Your Courses</Link>
+                  </div>
                 )}
               </nav>
               <div className="flex items-center space-x-4">

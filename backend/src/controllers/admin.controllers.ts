@@ -3,7 +3,8 @@ import * as z from "zod";
 import { hashPass, verifyPass } from "../utils/managePass.utils";
 import { signToken } from "../utils/jwt.utils";
 import { adminJwtSecret } from "../constant";
-import { Admin, Course } from "../db/db";
+import { Admin, Balance, Course, prisma } from "../db/db";
+import { sendTxn } from "../utils/sendTxn";
 
 const userSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -24,6 +25,11 @@ const courseSchema = z.object({
   description: z.string(),
   price: z.string(),
   imageURL: z.string(),
+});
+
+const payoutSchema = z.object({
+  address: z.string(),
+  amount: z.number(),
 });
 
 const option = {
@@ -71,7 +77,7 @@ const handleAdminRegister = async (req: Request, res: Response) => {
       lastName: lastName,
       password: hashedPass,
       address: address,
-    }
+    },
   });
 
   if (!user) {
@@ -92,7 +98,7 @@ const handleAdminLogin = async (req: Request, res: Response) => {
       return res.status(400).json({ error: userData.error });
     }
 
-    const { email, password, address } = userData.data;
+    const { email, password, address } = req.body;
 
     if (!email || !password || !address) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -102,16 +108,21 @@ const handleAdminLogin = async (req: Request, res: Response) => {
     const userExists = await Admin.findFirst({
       where: {
         email: email,
-        address: address,
       },
     });
 
     if (!userExists) {
-      return res.status(400).json({ error: "Admin doesnot exists" });
+      return res.status(400).json({ error: "Admin does not exists" });
+    }
+
+    console.log(userExists.address, address);
+
+    if(userExists.address !== address){
+      return res.status(400).json({ error: "Invalid address" });
     }
 
     //   pass check
-    if(!userExists.password) {
+    if (!userExists.password) {
       return res.status(404).json({
         error: "Invalid password",
       });
@@ -173,14 +184,12 @@ const handleCourseCreation = async (req: any, res: Response) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-
     const courseExists = await Course.findFirst({
       where: {
         title: title,
-        createrId: admin.id
-      } 
+        createrId: admin.id,
+      },
     });
-    
 
     if (courseExists) {
       return res.status(400).json({ error: "Course already exists" });
@@ -193,7 +202,7 @@ const handleCourseCreation = async (req: any, res: Response) => {
         price: price,
         imageURL: imageURL,
         createrId: admin.id,
-      }
+      },
     });
 
     if (!course) {
@@ -292,7 +301,7 @@ const handleCourseUpdate = async (req: any, res: Response) => {
         id: courseId,
       },
       data: courseInputData,
-    })
+    });
 
     if (!updatedCourse) {
       return res.status(500).json({ error: "Error in updating course" });
@@ -316,7 +325,7 @@ const handleCourseDelete = async (req: any, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const courseId  = req.params.id;
+    const courseId = req.params.id;
 
     if (!courseId) {
       return res.status(403).json({
@@ -327,8 +336,8 @@ const handleCourseDelete = async (req: any, res: Response) => {
     const deletedCourse = await Course.delete({
       where: {
         id: courseId,
-      }
-    })
+      },
+    });
 
     if (!deletedCourse) {
       return res.status(500).json({
@@ -345,6 +354,158 @@ const handleCourseDelete = async (req: any, res: Response) => {
   }
 };
 
+const handleBalance = async (req: any, res: Response) => {
+  const admin = req.admin;
+
+  if (!admin) {
+    return res.status(401).json({
+      error: "Unauthorized",
+    });
+  }
+
+  const balance = await Balance.findFirst({
+    where: {
+      adminId: admin.id,
+    },
+  });
+
+  if (!balance) {
+    return res.status(404).json({
+      error: "Balance not found",
+    });
+  }
+
+  return res.status(200).json({
+    message: "Balance fetched successfully",
+    data: {
+      pendingAmount: balance.pendingAmount,
+      lockedAmount: balance.lockedAmount,
+    },
+  });
+};
+
+const handlePayout = async (req: any, res: Response) => {
+  const admin = req.admin;
+
+  if (!admin) {
+    return res.status(401).json({
+      error: "Unauthorized",
+    });
+  }
+
+  const payoutData = payoutSchema.safeParse(req.body);
+
+  if (!payoutData.success) {
+    return res.status(400).json({ error: payoutData.error });
+  }
+
+  const { address, amount } = payoutData.data;
+
+  if (!address || !amount) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  try {
+    const balance = await Balance.findFirst({
+      where: {
+        adminId: admin.id,
+      },
+    });
+
+    if (balance?.pendingAmount !== amount) {
+      return res.status(400).json({
+        error: "Invalid amount",
+      });
+    }
+
+    const payoutTxn = await sendTxn(address, amount);
+
+    if (payoutTxn?.verify === false || !payoutTxn?.sign) {
+      return res.status(500).json({
+        error: "Transaction failed",
+      });
+    }
+
+    const { updatedBalance, adminTxn } = await prisma.$transaction(
+      async (tx) => {
+        const updatedBalance = await tx.balance.update({
+          where: {
+            id: balance?.id,
+            adminId: admin.id,
+          },
+          data: {
+            pendingAmount: {
+              decrement: amount,
+            },
+            lockedAmount: {
+              increment: amount,
+            },
+          },
+        });
+
+        const adminTxn = await tx.adminTransaction.create({
+          data: {
+            amount: String(amount),
+            tansactionId: payoutTxn?.sign,
+            adminId: admin.id,
+          },
+        });
+
+        return {
+          updatedBalance,
+          adminTxn,
+        };
+      }
+    );
+
+    if (!updatedBalance || !adminTxn) {
+      return res.status(500).json({
+        error: "Error in transaction",
+      });
+    }
+
+    return res.status(204).json({
+      message: "Payout successful",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const handleAdminTransactions = async (req: any, res: Response) => {
+  const admin = req.admin;
+
+  if(!admin){
+    return res.status(401).json({
+      error: "Unauthorized"
+    });
+  }
+
+  const transactions = await prisma.adminTransaction.findMany({
+    where: {
+      adminId: admin.id
+    },
+    select: {
+      id: true,
+      tansactionId: true,
+      amount: true,
+      createdAt: true,
+    }
+  });
+
+  if(!transactions){
+    return res.status(404).json({
+      error: "Transactions not found"
+    });
+  }
+
+  return res.status(200).json({
+    message: "Transactions fetched successfully",
+    data: transactions,
+  });
+
+}
+
 export {
   handleAdminRegister,
   handleAdminLogin,
@@ -353,4 +514,7 @@ export {
   handleAdminCourseDisplay,
   handleCourseUpdate,
   handleCourseDelete,
+  handleBalance,
+  handlePayout,
+  handleAdminTransactions
 };

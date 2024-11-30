@@ -11,3 +11,4 @@ export const cloudApiKey = process.env.CLOUD_API_KEY;
 export const cloudApiSecret = process.env.CLOUD_API_SECRET;
 export const solanaRpcUrl = process.env.SOLANA_RPC_URL !;
 export const parentWalletAddress = process.env.PARENT_WALLET_ADDRESS;
+export const privateKey = process.env.PRIVATE_KEY;

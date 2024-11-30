@@ -30,7 +30,7 @@ export function Register() {
     const password = passwordRef.current?.value;
     try {
       const response = await axios.post(
-        "http://localhost:3030/api/v1/auth/user/register",
+        "http://localhost:3030/api/v1/user/register",
         {
           firstName: firstName,
           lastName: lastName,
@@ -129,7 +129,7 @@ export function Register() {
             </div>
           </form>
           <div className="mt-4 text-center">
-            <Link to="/login" className="text-sm text-blue-600 hover:underline">
+            <Link to="/user/login" className="text-sm text-blue-600 hover:underline">
               Already have an account? Log in
             </Link>
           </div>

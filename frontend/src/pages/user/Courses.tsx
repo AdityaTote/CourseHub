@@ -18,18 +18,9 @@ import useDebounce from "@/hooks/useDebounce";
 import axios from "axios";
 import { useRecoilState } from "recoil";
 import { searchCourseAtom } from "@/store/atom";
+import { UserCourse } from "@/types";
 
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  imageURL: string;
-  creater:{
-    firstName: string;
-    lastName: string;
-  }
-}
+
 
 export function Courses() {
   const { data, loading, error } = useFetch(`${BACKEND_URL}/api/v1/course/preview`, false);
@@ -83,7 +74,7 @@ export function Courses() {
   }
 }
 
-function CourseDisplay({data}: {data: Course[]}) {
+function CourseDisplay({data}: {data: UserCourse[]}) {
   return(
     <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-extrabold text-gray-900 mb-8">
@@ -91,7 +82,7 @@ function CourseDisplay({data}: {data: Course[]}) {
           </h1>
           {data && data.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {data.map((course: Course) => (
+              {data.map((course: UserCourse) => (
                 <CourseCard key={course.id} course={course}/>
               ))}
             </div>
@@ -105,11 +96,12 @@ function CourseDisplay({data}: {data: Course[]}) {
 }
 
 
-function CourseCard({course}: {course: Course}) {
+function CourseCard({course}: {course: UserCourse}) {
   const showDescription = (description: string) => {
     return description.slice(0, 100);
   };
   return(
+    <Link to={`/courses/${course.id}`}>
     <Card key={course.id}>
       <CardHeader>
         <CardTitle>{course.title}</CardTitle>
@@ -141,5 +133,6 @@ function CourseCard({course}: {course: Course}) {
         </Link>
       </CardFooter>
     </Card>
+    </Link>
   )
 }

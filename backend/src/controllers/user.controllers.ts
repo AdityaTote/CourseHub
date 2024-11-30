@@ -3,7 +3,8 @@ import * as z from "zod";
 import { hashPass, verifyPass } from "../utils/managePass.utils";
 import { signToken } from "../utils/jwt.utils";
 import { userJwtSecret } from "../constant";
-import { Course, Purchase, User } from "../db/db";
+import { Course, prisma, Purchase, User } from "../db/db";
+import { verifyTransaction } from "../utils/checkTransaction.utils";
 
 const userSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
@@ -16,6 +17,13 @@ const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
   password: z.string().min(6),
 });
+
+const purchasedCourseSchema = z.object({
+  address: z.string(),
+  signature: z.string(),
+  amount: z.string(),
+  adminId: z.string(),
+})
 
 const option = {
   httpOnly: true,
@@ -203,55 +211,204 @@ const handleUserCourses = async (req: any, res: Response) => {
   }
 };
 
-// const handleUserCoursePurchase = async (req: any, res: Response) => {
+export const handleCheckExistingCourse = async(req: any, res: Response) => {
+  
+  const user = req.user;
 
-//   try {
-//     const user = req.user;
-  
-//     if(!user){
-//       return res.status(401).json({error: "Unauthorized"});
-//     }
-  
-//     const { courseId } = req.body;
-  
-//     if(!courseId){
-//       return res.status(400).json({error: "Missing required fields"});
-//     }
-  
-//     const course = await db.query.Course.findFirst({
-//       where: eq(Course.id, courseId),
-//     });
-  
-//     if(!course){
-//       return res.status(404).json({error: "Course not found"});
-//     }
-  
-//     const purchasedCourse = await db.insert(PurchasedCourse).values({
-//       courseId: courseId,
-//       userId: user.id,
-//       transactionId: transactionId
-//     });
-  
-//     if(!purchasedCourse){
-//       return res.status(500).json({error: "Error in purchasing course"});
-//     }
-  
-//     return res.status(200).json({
-//       message: "Course purchased successfully",
-//       data: purchasedCourse,
-//     });
-//   } catch (error: any) {
-//     console.log(error);
-//     return res.json({
-//       error: error.message,
-//     });
-//   }
-// }
+  if (!user) {
+    return res.status(401).json({
+      error: "Unauthorized",
+    });
+  }
+
+  const courseId = req.params.id;
+
+  if(!courseId){
+    return res.status(400).json({
+      error: "courseId is missing"
+    })
+  }
+
+  const course = await Course.findFirst({
+    where: {
+      id: courseId,
+    }
+  });
+
+  if (!course) {
+    return res.status(404).json({
+      error: "Course not found",
+      data: {
+        isPurchased: null
+      }
+    });
+  }
+
+  const existingPurchase = await Purchase.findFirst({
+    where: {
+      courseId,
+      userId: user.id,
+    }
+  })
+
+  if (existingPurchase) {
+    return res.status(400).json({
+      error: "Course already purchased",
+      data: {
+        isPurchased: true
+      }
+    });
+  }
+
+  return res.status(200).json({
+    message: "Course not purchased",
+    data: {
+      isPurchased: false,
+      adminId: course.createrId
+    }
+  });
+
+}
+
+export const handleCoursePurchase = async (req: any, res: Response) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({
+        error: "Unauthorized",
+      });
+    }
+
+    const courseId = req.params.id;
+
+    if(!courseId){
+      return res.status(400).json({
+        error: "courseId is missing"
+      })
+    }
+
+    const purchasedCourseData = purchasedCourseSchema.safeParse(req.body);
+
+    if (!purchasedCourseData.success) {
+      return res.status(400).json({ error: purchasedCourseData.error });
+    }
+
+    const { address, amount, signature, adminId } = purchasedCourseData.data;
+
+    if (!address || !amount || !signature || !adminId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+   const confirm = verifyTransaction(signature, address);
+
+   console.log(confirm)
+
+   if(!confirm){
+      return res.status(400).json({
+        error: "Transaction verification failed"
+   })
+    };
+
+    const { transaction, balance, purchasedCourse } = await prisma.$transaction(async (tx) => {
+      // Step 1: Create a new transaction record
+      const transaction = await tx.transaction.create({
+        data: {
+          address,
+          amount,
+          signature,
+          courseId,
+          userId: user.id, // assuming `user.id` is defined
+        },
+      });
+    
+      // Step 2: Upsert the balance record for the admin
+      const balance = await tx.balance.upsert({
+        where: {
+          adminId: adminId,
+        },
+        update: {
+          pendingAmount: {
+            increment: Number(amount), // Increment existing balance
+          },
+        },
+        create: {
+          adminId: adminId, // Create new balance entry
+          pendingAmount: Number(amount), // Initialize with the given amount
+          lockedAmount: 0, // Initialize with 0
+        },
+      });
+    
+      // Step 3: Create a purchase record linked to the transaction
+      const purchasedCourse = await tx.purchase.create({
+        data: {
+          courseId: courseId,
+          userId: user.id,
+          transactionId: transaction.id, // Reference the transaction created above
+        },
+      });
+    
+      // Return the results of all operations
+      return {
+        transaction,
+        balance,
+        purchasedCourse,
+      };
+    });
+
+    return res.status(201).json({
+      message: "Course purchased successfully",
+      data: purchasedCourse,
+    });
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({
+      error: error.message,
+    });
+  }
+};
+
+const handleUserTransaction = async (req: any, res: Response) => {
+
+  const user = req.user;
+
+  if(!user){
+    return res.status(400).json({error: "User not found"});
+  }
+
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      userId: user.id,
+    },
+    select: {
+      id: true,
+      address: true,
+      amount: true,
+      course: {
+        select: {
+          title: true,
+        },
+      },
+      signature: true,
+      createdAt: true,
+    }
+  });
+
+  if(!transactions){
+    return res.status(404).json({error: "No transactions found"});
+  }
+
+  return res.status(200).json({
+    message: "Transactions found",
+    data: transactions,
+  });
+
+}
 
 export {
   handleUserRegister,
   handleUserLogin,
   handleUserLogout,
   handleUserCourses,
-  // handleUserCoursePurchase
+  handleUserTransaction
 };

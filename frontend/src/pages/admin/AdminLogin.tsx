@@ -29,13 +29,15 @@ export function AdminLogin() {
       setIsError(true);
       return;
     }
+    const address = wallet.publicKey?.toString();
+    console.log(address)
     try {
       const response = await axios.post(
         "http://localhost:3030/api/v1/admin/login",
         {
           email: emailRef.current?.value,
           password: passRef.current?.value,
-          address: wallet.publicKey?.toString(),
+          address: address,
         },
         { withCredentials: true }
       );

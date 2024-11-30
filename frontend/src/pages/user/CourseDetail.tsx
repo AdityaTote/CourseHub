@@ -8,7 +8,10 @@ import { BACKEND_URL } from "@/utils";
 export function CourseDetail() {
   const { id } = useParams<{ id: string }>();
 
-  const { data, loading, error } = useFetch(`${BACKEND_URL}/api/v1/course/preview/${id}`, false);
+  const { data, loading, error } = useFetch(
+    `${BACKEND_URL}/api/v1/course/preview/${id}`,
+    false
+  );
 
   if (loading) {
     return (
@@ -26,12 +29,12 @@ export function CourseDetail() {
         </div>
       </Layout>
     );
-  } else if(data){
-
+  } else if (data) {
     return (
       <Layout>
+        (
         <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
-          <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
+          <div className="lg:grid lg:grid-cols-2 lg:gap-x-36">
             <div>
               <h1 className="text-3xl font-extrabold text-gray-900 mb-4">
                 {data?.title}
@@ -42,30 +45,35 @@ export function CourseDetail() {
                 </h2>
                 <ul className="list-disc pl-5 space-y-2"></ul>
               </div>
-              <pre className="text-lg text-gray-500 mb-6 whitespace-pre-wrap font-sans">{data?.description}</pre>
+              <pre className="text-lg text-gray-500 mb-6 whitespace-pre-wrap font-sans">
+                {data?.description}
+              </pre>
               <p className="text-lg text-gray-900 mb-6 whitespace-pre-line font-bold">
-                Created by: {data?.creater.firstName + " " + data?.creater.lastName}
+                Created by:{" "}
+                {data?.creater.firstName + " " + data?.creater.lastName}
               </p>
             </div>
-            <div className="mt-10 lg:mt-0">
-              <div className="bg-white shadow rounded-lg p-6">
-                <img
-                  src={data?.imageURL}
-                  alt="course-image"
-                  className="rounded-xl"
-                  width={800}
-                />
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                  Course Details
-                </h2>
-                <p className="text-3xl font-bold text-blue-600 mb-2">
-                 $ {data?.price}
-                </p>
-                <Link to={`/payment/${data?.id}`}>
-                  <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
-                    Enroll Now
-                  </Button>
-                </Link>
+            <div className="">
+              <div className="bg-white w-[500px] shadow rounded-lg p-6 flex justify-center items-center">
+                <div>
+                  <img
+                    src={data?.imageURL}
+                    alt="course-image"
+                    className="rounded-xl"
+                    width={400}
+                  />
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                    Course Details
+                  </h2>
+                  <p className="text-3xl font-bold text-blue-600 mb-2">
+                    $ {data?.price}
+                  </p>
+                  <Link to={`/payment/${data.id}`}>
+                    <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
+                      Enroll Now
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -73,5 +81,4 @@ export function CourseDetail() {
       </Layout>
     );
   }
-
 }

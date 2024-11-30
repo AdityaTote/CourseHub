@@ -25,11 +25,13 @@ export function AdminDashboard() {
           <Link to="/admin/manage-courses">
             <Button className="w-full h-32 text-xl">Manage Courses</Button>
           </Link>
-          <Link to="/admin/manage-users">
-            <Button className="w-full h-32 text-xl">Manage Users</Button>
+          <Link to="/admin/manage-payout">
+            <Button className="w-full h-32 text-xl">Manage Payouts</Button>
           </Link>
         </div>
       </div>
     </AdminLayout>
   );
 }
+
+"promt: create a nice ui design fo rthe page where admin can see there earing and by clicking the button it should be payout,and down to it there should be the transaction of the payouts by admin"

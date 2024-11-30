@@ -26,7 +26,7 @@ export function Login() {
     const password = passRef.current?.value;
     try {
       const response = await axios.post(
-        "http://localhost:3030/api/v1/auth/user/login",
+        "http://localhost:3030/api/v1/user/login",
         {
           email: email,
           password: password,
@@ -102,7 +102,7 @@ export function Login() {
           </form>
           <div className="mt-4 text-center">
             <Link
-              to="/register"
+              to="/user/register"
               className="text-sm text-blue-600 hover:underline"
             >
               Don't have an account? Sign up

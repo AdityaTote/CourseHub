@@ -4,9 +4,12 @@ import {
   handleAdminLogin,
   handleAdminLogout,
   handleAdminRegister,
+  handleBalance,
   handleCourseCreation,
   handleCourseDelete,
-  handleCourseUpdate
+  handleCourseUpdate,
+  handlePayout,
+  handleAdminTransactions
 } from "../controllers/admin.controllers";
 import { checkAdminAuth } from "../middlewares/adminAuth.middlewares";
 import { upload } from "../middlewares/multer.middlewares";
@@ -25,3 +28,6 @@ adminRouter
   .patch("/course/:id", upload.single("coverImg"), handleCourseUpdate)
   .get("/courses", handleAdminCourseDisplay)
   .delete("/course/:id", handleCourseDelete)
+  .get("/balance", handleBalance)
+  .post("/payout", handlePayout)
+  .get("/transactions", handleAdminTransactions)
