@@ -33,5 +33,3 @@ export function AdminDashboard() {
     </AdminLayout>
   );
 }
-
-"promt: create a nice ui design fo rthe page where admin can see there earing and by clicking the button it should be payout,and down to it there should be the transaction of the payouts by admin"

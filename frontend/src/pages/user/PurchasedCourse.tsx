@@ -39,6 +39,14 @@ export function PurchasedCourse() {
         <CourseDisplay data={data} />
       </Layout>
     );
+  } else if (error) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <p className="text-xl text-gray-500">Something went wrong</p>
+        </div>
+      </Layout>
+    );
   } else {
     return (
       <Layout>

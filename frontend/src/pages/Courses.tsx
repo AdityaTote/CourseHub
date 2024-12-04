@@ -42,7 +42,15 @@ export function Courses() {
     }
   }, [debounceVal, setSearchData])
 
- 
+ if (error) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <p className="text-xl text-gray-500">Something went wrong</p>
+        </div>
+      </Layout>
+    );
+  }
 
   if (loading) {
     return (

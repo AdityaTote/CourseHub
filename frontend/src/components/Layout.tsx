@@ -12,24 +12,25 @@ import { NavLink } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated: isUserAuthenticated, logout: userLogout } =
-    useUserAuth();
-  const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } =
-    useAdminAuth();
-    const wallet = useWallet();
+  const { isAuthenticated: isUserAuthenticated, logout: userLogout } = useUserAuth();
+  const { isAuthenticated: isAdminAuthenticated, logout: adminLogout } = useAdminAuth();
+  const wallet = useWallet();
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-  const handleLogout = async() => {
+  const handleLogout = async () => {
     if (isUserAuthenticated) {
       await userLogout();
-      if(wallet){
+      if (wallet) {
         wallet.disconnect();
       }
       navigate("/");
-    } else if (isAdminAuthenticated) {
+    }
+    if (isAdminAuthenticated) {
       await adminLogout();
-      wallet.disconnect()
+      if(wallet){
+        wallet.disconnect();
+      }
       navigate("/");
     }
   };
@@ -47,17 +48,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             </div>
             <div className={"flex"}>
-              <nav className="flex space-x-8 ">
+              <nav className="flex  items-center sm:ml-0 ml-4">
                 {isAdminAuthenticated ? (
                   <CoursesLink to={"/admin/manage-courses"} />
                 ) : (
                   <div className="flex items-centre">
                     <CoursesLink to={"/courses"} />
-                    <Link to={`/user/courses`} className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"> Your Courses</Link>
                   </div>
                 )}
+                {isUserAuthenticated ? (
+                  <div>
+                    <Link
+                      to={`/user/courses`}
+                      className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                    >
+                      Your Courses
+                    </Link>
+                  </div>
+                ) : (
+                  <div></div>
+                )}
               </nav>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center">
                 {isUserAuthenticated || isAdminAuthenticated ? (
                   <Button
                     variant="ghost"
@@ -113,10 +125,10 @@ const LoginOption = () => (
     </DropdownMenuTrigger>
     <DropdownMenuContent className="w-56">
       <DropdownMenuCheckboxItem>
-        <NavLink to="/user/login">User Login</NavLink>
+        <NavLink to="/user/login">Learner Login</NavLink>
       </DropdownMenuCheckboxItem>
       <DropdownMenuCheckboxItem>
-        <NavLink to="/admin/login">Admin Login</NavLink>
+        <NavLink to="/admin/login">Educator Login</NavLink>
       </DropdownMenuCheckboxItem>
     </DropdownMenuContent>
   </DropdownMenu>
@@ -131,10 +143,10 @@ const RegisterOption = () => (
     </DropdownMenuTrigger>
     <DropdownMenuContent className="w-56">
       <DropdownMenuCheckboxItem>
-        <NavLink to="/user/register">User Register</NavLink>
+        <NavLink to="/user/register">Learner Register</NavLink>
       </DropdownMenuCheckboxItem>
       <DropdownMenuCheckboxItem>
-        <NavLink to="/admin/register">Admin Register</NavLink>
+        <NavLink to="/admin/register">Educator Register</NavLink>
       </DropdownMenuCheckboxItem>
     </DropdownMenuContent>
   </DropdownMenu>

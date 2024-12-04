@@ -4,15 +4,14 @@ import { useFetch } from "@/hooks/useFetch";
 import { BACKEND_URL } from "@/utils";
 import { useRecoilState } from "recoil";
 import { adminTransactionAtom } from "@/store/atom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { TransactionHistorySkeleton } from "./TransactionHistorySkeleton";
 import { AdminTransactions } from "@/types";
-
-
 
 const TransactionHistory: React.FC = () => {
   const { data, error, loading } = useFetch(`${BACKEND_URL}/api/v1/admin/transactions`, true);
   const [transactions, setTransactions] = useRecoilState(adminTransactionAtom);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (data) {
@@ -26,35 +25,44 @@ const TransactionHistory: React.FC = () => {
     )
   }
 
+  if(error){
+      setErrorMsg(error);
+  }
+
   if(data){
     return (
-      <Card className="bg-white shadow-lg">
-        <CardHeader>
-          <CardTitle className="text-primary">Payout Transaction History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-primary">Transaction Signature</TableHead>
-                <TableHead className="text-primary">Date</TableHead>
-                <TableHead className="text-primary">Amount</TableHead>
-                <TableHead className="text-primary">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.map((transaction: AdminTransactions) => (
-                <TableRow key={transaction.id}>
-                  <TableCell>{transaction.tansactionId}</TableCell>
-                  <TableCell>{new Date(transaction.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>{transaction.amount} SOL</TableCell>
-                  <TableCell>Success</TableCell>
+      <div>
+        {errorMsg ?<div className="flex justify-center items-center text-xl font-semibold">{errorMsg}</div> : (
+          <Card className="bg-white shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-primary">Payout Transaction History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-primary">Transaction Signature</TableHead>
+                  <TableHead className="text-primary">Date</TableHead>
+                  <TableHead className="text-primary">Amount</TableHead>
+                  <TableHead className="text-primary">Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {transactions.map((transaction: AdminTransactions) => (
+                  <TableRow key={transaction.id}>
+                    <TableCell>{transaction.tansactionId}</TableCell>
+                    <TableCell>{new Date(transaction.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{transaction.amount} SOL</TableCell>
+                    <TableCell>Success</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        )}
+      </div>
+      
     );
   }
 }

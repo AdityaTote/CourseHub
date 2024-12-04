@@ -5,8 +5,9 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import useUserAuth from "@/hooks/useUserAuth";
+import { BACKEND_URL } from "@/utils";
 
 export function Login() {
   const { isAuthenticated } = useUserAuth();
@@ -26,7 +27,7 @@ export function Login() {
     const password = passRef.current?.value;
     try {
       const response = await axios.post(
-        "http://localhost:3030/api/v1/user/login",
+        `${BACKEND_URL}/api/v1/user/login`,
         {
           email: email,
           password: password,
@@ -43,10 +44,23 @@ export function Login() {
         setMessage(response.data.error || "An error occurred");
         setIsError(true);
       }
-    } catch (error: any) {
-      console.log(error.response?.data?.error);
-      setMessage(error.response?.data?.error || "An error occurred");
-      setIsError(true);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorMessage = error.response?.data?.error || "An error occurred.";
+        console.log(errorMessage);
+        setMessage(errorMessage);
+        setIsError(true);
+      } else if (error instanceof Error) {
+        // Generic Error handling
+        console.log(error.message);
+        setMessage(error.message);
+        setIsError(true);
+      } else {
+        // Fallback for unknown error types
+        console.log("Unexpected error", error);
+        setMessage("An unexpected error occurred.");
+        setIsError(true);
+      }
     }
   };
 

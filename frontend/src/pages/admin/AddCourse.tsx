@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import useAdminAuth from "@/hooks/useAdminAuth";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
 import { BACKEND_URL, CLOUDFRONT_URL } from "@/utils";
 import { AdminLayout } from "@/components/AdminLayout";
@@ -58,7 +58,7 @@ export function AddCourse() {
 
     try {
       const response = await axios.post(
-        "http://localhost:3030/api/v1/admin/course",
+        `${BACKEND_URL}/api/v1/admin/course`,
         {
           title: title,
           description: description,
@@ -83,13 +83,23 @@ export function AddCourse() {
         setMessage("An error occurred while adding the course.");
         setIsError(true);
       }
-    } catch (error: any) {
-      console.log(error.response?.data?.error);
-      setMessage(
-        error.response?.data?.error ||
-          "An error occurred while adding the course."
-      );
-      setIsError(true);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorMessage = error.response?.data?.error || "An error occurred while adding the course.";
+        console.log(errorMessage);
+        setMessage(errorMessage);
+        setIsError(true);
+      } else if (error instanceof Error) {
+        // Generic Error handling
+        console.log(error.message);
+        setMessage(error.message);
+        setIsError(true);
+      } else {
+        // Fallback for unknown error types
+        console.log("Unexpected error", error);
+        setMessage("An error occurred while adding the course.");
+        setIsError(true);
+      }
     }
   };
 

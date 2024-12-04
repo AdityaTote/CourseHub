@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { BACKEND_URL } from "@/utils";
 
 function useAdminAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -8,7 +9,7 @@ function useAdminAuth() {
     const checkAuth = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:3030/api/v1/secure/admin",
+          `${BACKEND_URL}/api/v1/secure/admin`,
           {
             withCredentials: true,
           }
@@ -30,7 +31,7 @@ function useAdminAuth() {
 
   const logout = async () => {
     try {
-      await axios.get("http://localhost:3030/api/v1/admin/logout", {
+      await axios.get(`${BACKEND_URL}/api/v1/admin/logout`, {
         withCredentials: true,
       });
       setIsAuthenticated(false);

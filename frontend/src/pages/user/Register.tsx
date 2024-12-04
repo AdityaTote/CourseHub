@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import axios from "axios";
+import axios, {AxiosError} from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import { Button } from "../../components/ui/button";
@@ -7,6 +7,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
 import useUserAuth from "@/hooks/useUserAuth";
+import { BACKEND_URL } from "@/utils";
 
 export function Register() {
   const { isAuthenticated } = useUserAuth();
@@ -30,7 +31,7 @@ export function Register() {
     const password = passwordRef.current?.value;
     try {
       const response = await axios.post(
-        "http://localhost:3030/api/v1/user/register",
+        `${BACKEND_URL}/api/v1/user/register`,
         {
           firstName: firstName,
           lastName: lastName,
@@ -47,10 +48,23 @@ export function Register() {
         setMessage(response.data.error);
         setIsError(true);
       }
-    } catch (error: any) {
-      console.log(error.response?.data?.error);
-      setMessage(error.response?.data?.error);
-      setIsError(true);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorMessage = error.response?.data?.error || "An error occurred.";
+        console.log(errorMessage);
+        setMessage(errorMessage);
+        setIsError(true);
+      } else if (error instanceof Error) {
+        // Generic Error handling
+        console.log(error.message);
+        setMessage(error.message);
+        setIsError(true);
+      } else {
+        // Fallback for unknown error types
+        console.log("Unexpected error", error);
+        setMessage("An unexpected error occurred.");
+        setIsError(true);
+      }
     }
   };
 

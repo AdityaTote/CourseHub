@@ -22,7 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PencilIcon } from "lucide-react";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useFetch } from "@/hooks/useFetch";
 import { BACKEND_URL, CLOUDFRONT_URL } from "@/utils";
 import { CourseSkeleton } from "@/components/CourseSkeleton";
@@ -144,7 +144,7 @@ function Courses({ course }: { course: Course }) {
       formData.append("imageURL", imgUrl);
 
       const response = await axios.patch(
-        `http://localhost:3030/api/v1/admin/course/${updatedCourse.id}`,
+        `${BACKEND_URL}/api/v1/admin/course/${updatedCourse.id}`,
         formData,
         {
           withCredentials: true,
@@ -164,10 +164,23 @@ function Courses({ course }: { course: Course }) {
         setIsError(false);
         setIsDialogOpen(false);
       }
-    } catch (error: unknown) {
-      console.log(error.response.data.error);
-      setMessage(error.response.data.error);
-      setIsError(true);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorMessage = error.response?.data?.error || "An error occurred.";
+        console.log(errorMessage);
+        setMessage(errorMessage);
+        setIsError(true);
+      } else if (error instanceof Error) {
+        // Generic Error handling
+        console.log(error.message);
+        setMessage(error.message);
+        setIsError(true);
+      } else {
+        // Fallback for unknown error types
+        console.log("Unexpected error", error);
+        setMessage("An unexpected error occurred.");
+        setIsError(true);
+      }
     }
   };
   return (

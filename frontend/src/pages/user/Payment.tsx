@@ -13,7 +13,7 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import {
   Card,
   CardContent,
@@ -52,6 +52,16 @@ export function Payment() {
   if (!isAuthenticated) {
     naviagte("/user/login");
     return null;
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <p className="text-xl text-gray-500">Something went wrong</p>
+        </div>
+      </Layout>
+    );
   }
 
   if (data) {
@@ -127,13 +137,20 @@ export function Payment() {
           setMessage("Failed to record purchase");
         }
     
-      } catch (error: any) {
-        console.error("Payment error:", error);
-        setMessage(
-          error.response?.data?.error || 
-          error.message || 
-          "Transaction failed. Please try again."
-        );
+      } catch (error) {
+        if (error instanceof AxiosError) {
+          const errorMessage = error.response?.data?.error || "Transaction failed. Please try again.";
+          console.log(errorMessage);
+          setMessage(errorMessage);
+        } else if (error instanceof Error) {
+          // Generic Error handling
+          console.log(error.message);
+          setMessage(error.message);
+        } else {
+          // Fallback for unknown error types
+          console.log("Payment error", error);
+          setMessage("Transaction failed. Please try again.");
+        }
       }
     };
     return (

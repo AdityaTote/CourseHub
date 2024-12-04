@@ -1,9 +1,9 @@
-import { Home } from "./user/Home";
-import { Courses } from "./user/Courses";
+import { Home } from "./Home";
+import { Courses } from "./Courses";
 import { Login } from "./user/Login";
 import { Register } from "./user/Register";
 import { Payment } from "./user/Payment";
-import { CourseDetail } from "./user/CourseDetail";
+import { CourseDetail } from "./CourseDetail";
 import { AddCourse } from "./admin/AddCourse";
 import { AdminDashboard } from "./admin/AdminDashboard";
 import { AdminLogin } from "./admin/AdminLogin";

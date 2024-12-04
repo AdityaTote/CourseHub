@@ -4,10 +4,11 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import useAdminAuth from "@/hooks/useAdminAuth";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { AdminLayout } from "@/components/AdminLayout";
+import { BACKEND_URL } from "@/utils";
 
 export function AdminLogin() {
   const { isAuthenticated } = useAdminAuth();
@@ -33,7 +34,7 @@ export function AdminLogin() {
     console.log(address)
     try {
       const response = await axios.post(
-        "http://localhost:3030/api/v1/admin/login",
+        `${BACKEND_URL}/api/v1/admin/login`,
         {
           email: emailRef.current?.value,
           password: passRef.current?.value,
@@ -51,10 +52,23 @@ export function AdminLogin() {
         setMessage(response.data.error || "An error occurred");
         setIsError(true);
       }
-    } catch (error: any) {
-      console.error(error.response?.data?.error);
-      setMessage(error.response?.data?.error || "An error occurred");
-      setIsError(true);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorMessage = error.response?.data?.error || "An error occurred.";
+        console.log(errorMessage);
+        setMessage(errorMessage);
+        setIsError(true);
+      } else if (error instanceof Error) {
+        // Generic Error handling
+        console.log(error.message);
+        setMessage(error.message);
+        setIsError(true);
+      } else {
+        // Fallback for unknown error types
+        console.log("Unexpected error", error);
+        setMessage("An unexpected error occurred.");
+        setIsError(true);
+      }
     }
   };
 
@@ -64,7 +78,7 @@ export function AdminLogin() {
       <div className="max-w-md mx-auto py-16 px-4 sm:py-4 sm:px-6 lg:px-8">
         <div className="bg-white p-8 shadow rounded-lg">
           <h2 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">
-            Admin Login
+            Educator Login
           </h2>
           {message && (
             <Alert
@@ -117,12 +131,12 @@ export function AdminLogin() {
               to="/admin/register"
               className="text-sm text-blue-600 hover:underline"
             >
-              Admin Register
+              Educator Register
             </Link>
           </div>
           <div className="mt-4 text-center">
             <Link to="/user/login" className="text-sm text-blue-600 hover:underline">
-              User Login
+              Learner Login
             </Link>
           </div>
         </div>
