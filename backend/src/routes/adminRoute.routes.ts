@@ -12,7 +12,6 @@ import {
   handleAdminTransactions
 } from "../controllers/admin.controllers";
 import { checkAdminAuth } from "../middlewares/adminAuth.middlewares";
-import { upload } from "../middlewares/multer.middlewares";
 
 export const adminRouter = Router();
 
@@ -25,7 +24,7 @@ adminRouter.use(checkAdminAuth);
 adminRouter
   .get("/logout", handleAdminLogout)
   .post("/course", handleCourseCreation)
-  .patch("/course/:id", upload.single("coverImg"), handleCourseUpdate)
+  .patch("/course/:id", handleCourseUpdate)
   .get("/courses", handleAdminCourseDisplay)
   .delete("/course/:id", handleCourseDelete)
   .get("/balance", handleBalance)
