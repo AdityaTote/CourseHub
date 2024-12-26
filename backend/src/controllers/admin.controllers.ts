@@ -33,7 +33,7 @@ const payoutSchema = z.object({
 });
 
 const option = {
-  httpOnly: true,
+  httpOnly: true
 };
 
 const handleAdminRegister = async (req: Request, res: Response) => {
@@ -139,7 +139,7 @@ const handleAdminLogin = async (req: Request, res: Response) => {
 
     const token = signToken(userExists, adminSecreteKey);
 
-    return res.status(204).cookie("adminSessionId", token, option).json({
+    return res.status(204).cookie("adminSessionId", token).json({
       message: "Admin logged in successfully",
     });
   } catch (error: any) {

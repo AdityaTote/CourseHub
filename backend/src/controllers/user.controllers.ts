@@ -133,7 +133,7 @@ const handleUserLogin = async (req: Request, res: Response) => {
 
     const token = signToken(userExists, userSecrete);
 
-    return res.status(200).cookie("sessionId", token, option).json({
+    return res.status(200).cookie("sessionId", token).json({
       message: "User logged in successfully",
     });
   } catch (error: any) {

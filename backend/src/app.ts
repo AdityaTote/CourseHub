@@ -8,7 +8,7 @@ const app = express();
 app.use(
   cors({
     origin: "https://course-hub-teal.vercel.app",
-    credentials: true
+    credentials: true,
   })
 );
 app.use(cookieParser());
