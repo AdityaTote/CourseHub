@@ -135,7 +135,6 @@ const handleUserLogin = async (req: Request, res: Response) => {
 
     return res.status(200).cookie("sessionId", token, option).json({
       message: "User logged in successfully",
-      data: userExists,
     });
   } catch (error: any) {
     console.log(error);
