@@ -3,7 +3,7 @@ import axios from "axios";
 import { BACKEND_URL } from "@/utils";
 
 function useAdminAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
     const checkAuth = async () => {
