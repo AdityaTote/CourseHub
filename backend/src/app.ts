@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
@@ -7,7 +7,7 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: "https://course-hub-teal.vercel.app",
+    origin: ["http://localhost:5173", "https://course-hub-teal.vercel.app"],
     credentials: true,
   })
 );
