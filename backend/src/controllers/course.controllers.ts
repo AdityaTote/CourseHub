@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Course} from "../db/db";
+import { prisma } from "../db/db";
 
 export const handleCoursesPreview = async (req: any, res: Response) => {
   try {
@@ -47,7 +47,7 @@ export const handleCourseDetail = async (req: any, res: Response) => {
       });
     }
 
-    const course = await Course.findFirst({
+    const course = await prisma.course.findFirst({
       where: {
         id: id
       },
@@ -64,7 +64,8 @@ export const handleCourseDetail = async (req: any, res: Response) => {
           select: {
             firstName: true,
             lastName: true,
-          }
+          },
+
         }
       }
     });
