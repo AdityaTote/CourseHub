@@ -22,7 +22,9 @@ const loginSchema = z.object({
 
 const courseSchema = z.object({
   title: z.string(),
-  description: z.string(),
+  about: z.string(),
+  learning: z.string(),
+  content: z.string(),
   price: z.string(),
   imageURL: z.string(),
 });
@@ -178,9 +180,9 @@ const handleCourseCreation = async (req: any, res: Response) => {
       return res.status(400).json({ error: courseData.error });
     }
 
-    const { title, description, price, imageURL } = courseData.data;
+    const { title, about, learning, content, price, imageURL } = courseData.data;
 
-    if (!title || !description) {
+    if (!title || !about || !learning || !content || !price || !imageURL) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -195,10 +197,15 @@ const handleCourseCreation = async (req: any, res: Response) => {
       return res.status(400).json({ error: "Course already exists" });
     }
 
+    const description = about + learning + content;
+
     const course = await Course.create({
       data: {
         title: title,
         description: description,
+        about: about,
+        learning: learning,
+        courseInclude: content,
         price: price,
         imageURL: imageURL,
         createrId: admin.id,
@@ -271,11 +278,14 @@ const handleCourseUpdate = async (req: any, res: Response) => {
       return res.status(400).json({ error: courseData.error });
     }
 
-    const { title, description, price, imageURL } = courseData.data;
+    const { title, about, content, learning, price, imageURL } = courseData.data;
 
     const courseInputData: {
       title?: string;
       description?: string;
+      about?: string;
+      learning?: string;
+      courseInclude?: string;
       price?: string;
       imageURL?: string;
     } = {};
@@ -288,8 +298,16 @@ const handleCourseUpdate = async (req: any, res: Response) => {
       courseInputData.price = price;
     }
 
-    if (description) {
-      courseInputData.description = description;
+    if (about) {
+      courseInputData.about = about;
+    }
+
+    if (learning) {
+      courseInputData.learning = learning;
+    }
+    
+    if (content) {
+      courseInputData.courseInclude = content;
     }
 
     if (imageURL) {

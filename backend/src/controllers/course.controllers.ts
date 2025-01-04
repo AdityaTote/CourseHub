@@ -57,6 +57,9 @@ export const handleCourseDetail = async (req: any, res: Response) => {
         description: true,
         price: true,
         imageURL: true,
+        about: true,
+        learning: true,
+        courseInclude: true,
         creater: {
           select: {
             firstName: true,

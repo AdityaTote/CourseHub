@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,12 +13,14 @@ import { AdminLayout } from "@/components/AdminLayout";
 export function AddCourse() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAdminAuth();
-  const [title, setTitle] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [price, setPrice] = useState<string>("");
   const [imgUrl, setImgUrl] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [isError, setIsError] = useState<boolean>(false);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const aboutRef = useRef<HTMLTextAreaElement>(null);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const learningRef = useRef<HTMLTextAreaElement>(null);
+  const priceRef = useRef<HTMLInputElement>(null);
 
   if (!isAuthenticated) {
     navigate("/admin/login");
@@ -60,9 +62,11 @@ export function AddCourse() {
       const response = await axios.post(
         `${BACKEND_URL}/api/v1/admin/course`,
         {
-          title: title,
-          description: description,
-          price: price,
+          title: titleRef.current?.value,
+          about: aboutRef.current?.value,
+          content: contentRef.current?.value,
+          learning: learningRef.current?.value,
+          price: priceRef.current?.value || "0",
           imageURL: imgUrl,
         },
         {
@@ -73,8 +77,6 @@ export function AddCourse() {
       if (response) {
         setMessage("Course added successfully.");
         setIsError(false);
-        setTitle("");
-        setDescription("");
         setImgUrl("");
         setTimeout(() => {
           navigate("/admin/manage-courses")
@@ -133,20 +135,40 @@ export function AddCourse() {
               required
               placeholder="Enter course title"
               className="mt-1"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              ref={titleRef}
             />
           </div>
           <div>
-            <Label htmlFor="description">Course Description</Label>
+            <Label htmlFor="about">About Course</Label>
             <Textarea
-              id="description"
-              name="description"
+              id="about"
+              name="about"
               required
-              placeholder="Enter course description"
+              placeholder="Enter course about"
               className="mt-1"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              ref={aboutRef}
+            />
+          </div>
+          <div>
+            <Label htmlFor="content">Course Content</Label>
+            <Textarea
+              id="content"
+              name="content"
+              required
+              placeholder="Enter course content"
+              className="mt-1"
+              ref={contentRef}
+            />
+          </div>
+          <div>
+            <Label htmlFor="learning">What You’ll Learn</Label>
+            <Textarea
+              id="learning"
+              name="learning"
+              required
+              placeholder="Enter course learning"
+              className="mt-1"
+              ref={learningRef}
             />
           </div>
           <div>
@@ -157,8 +179,7 @@ export function AddCourse() {
               required
               placeholder="Entre Price in Dollars"
               className="mt-1"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              ref={priceRef}
             />
           </div>
           <div>

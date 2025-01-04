@@ -93,9 +93,37 @@ function Courses({ course }: { course: Course }) {
     setIsDialogOpen(true);
   };
 
-  // const handleDelete = async (courseId: string) => {
-
-  // };
+  const handleDelete = async (courseId: string) => {
+    try {
+      const response = await axios.delete(
+        `${BACKEND_URL}/api/v1/admin/course/${courseId}`,
+        {
+          withCredentials: true,
+        }
+      );
+      if (response) {
+        console.log(response.data);
+        setCourses(courses.filter((course) => course.id !== courseId));
+      }
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorMessage = error.response?.data?.error || "An error occurred.";
+        console.log(errorMessage);
+        setMessage(errorMessage);
+        setIsError(true);
+      } else if (error instanceof Error) {
+        // Generic Error handling
+        console.log(error.message);
+        setMessage(error.message);
+        setIsError(true);
+      } else {
+        // Fallback for unknown error types
+        console.log("Unexpected error", error);
+        setMessage("An unexpected error occurred.");
+        setIsError(true);
+      }
+    }
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -278,7 +306,7 @@ function Courses({ course }: { course: Course }) {
               </form>
             </DialogContent>
           </Dialog>
-          <Button variant={"destructive"}>Delete</Button>
+          <Button variant={"destructive"} onClick={() => handleDelete(course.id)} >Delete</Button>
         </CardFooter>
       </Card>
     </div>
