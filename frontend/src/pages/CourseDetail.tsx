@@ -35,6 +35,7 @@
 
     const renderContentSection = (content: string) => {
       if (!content) return null;
+      console.log(content)
 
       return (
         <div className="space-y-4">
@@ -52,8 +53,8 @@
     };
 
     const renderDescription = (about: string) => {
-      if (!data) return null;
-      console.log(data)
+      console.log(about)
+      if (!about) return null;
       return (
         <div className="bg-white rounded-lg border p-6 space-y-6">
           <div className="border-l-4 border-blue-500 pl-4">
