@@ -17,7 +17,11 @@
       false
     );
 
-    const TabButton = ({ name, label, active }) => (
+    const TabButton = ({ name, label, active }: {
+      name: string,
+      label: string,
+      active: boolean
+    }) => (
       <button
         onClick={() => setActiveTab(name)}
         className={`px-4 py-2 font-medium rounded-lg transition-colors
@@ -29,7 +33,7 @@
       </button>
     );
 
-    const renderContentSection = (content) => {
+    const renderContentSection = (content: string) => {
       if (!content) return null;
 
       return (
@@ -47,7 +51,7 @@
       );
     };
 
-    const renderDescription = (about) => {
+    const renderDescription = (about: string) => {
       if (!data) return null;
       console.log(data)
       return (
