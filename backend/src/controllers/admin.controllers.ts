@@ -3,7 +3,7 @@ import * as z from "zod";
 import { hashPass, verifyPass } from "../utils/managePass.utils";
 import { signToken } from "../utils/jwt.utils";
 import { adminJwtSecret } from "../constant";
-import { Admin, Balance, Course, prisma } from "../db/db";
+import {  prisma } from "../db/db";
 import { sendTxn } from "../utils/sendTxn";
 
 const userSchema = z.object({
@@ -53,7 +53,7 @@ const handleAdminRegister = async (req: Request, res: Response) => {
   }
 
   //   check user already exists or not
-  const userExists = await Admin.findFirst({
+  const userExists = await prisma.admin.findFirst({
     where: {
       email: email,
     },
@@ -72,7 +72,7 @@ const handleAdminRegister = async (req: Request, res: Response) => {
     });
   }
 
-  const user = await Admin.create({
+  const user = await prisma.admin.create({
     data: {
       email: email,
       firstName: firstName,
@@ -107,7 +107,7 @@ const handleAdminLogin = async (req: Request, res: Response) => {
     }
 
     //   check user already exists or not
-    const userExists = await Admin.findFirst({
+    const userExists = await prisma.admin.findFirst({
       where: {
         email: email,
       },
@@ -116,8 +116,6 @@ const handleAdminLogin = async (req: Request, res: Response) => {
     if (!userExists) {
       return res.status(400).json({ error: "Admin does not exists" });
     }
-
-    console.log(userExists.address, address);
 
     if(userExists.address !== address){
       return res.status(400).json({ error: "Invalid address" });
@@ -186,7 +184,7 @@ const handleCourseCreation = async (req: any, res: Response) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const courseExists = await Course.findFirst({
+    const courseExists = await prisma.course.findFirst({
       where: {
         title: title,
         createrId: admin.id,
@@ -199,7 +197,7 @@ const handleCourseCreation = async (req: any, res: Response) => {
 
     const description = about + learning + content;
 
-    const course = await Course.create({
+    const course = await prisma.course.create({
       data: {
         title: title,
         description: description,
@@ -236,7 +234,7 @@ const handleAdminCourseDisplay = async (req: any, res: Response) => {
       return res.status(401).json({ error: "User is unauthorized" });
     }
 
-    const courses = await Course.findMany({
+    const courses = await prisma.course.findMany({
       where: {
         createrId: admin.id,
       },
@@ -314,7 +312,7 @@ const handleCourseUpdate = async (req: any, res: Response) => {
       courseInputData.imageURL = imageURL;
     }
 
-    const updatedCourse = await Course.update({
+    const updatedCourse = await prisma.course.update({
       where: {
         id: courseId,
       },
@@ -351,7 +349,7 @@ const handleCourseDelete = async (req: any, res: Response) => {
       });
     }
 
-    const deletedCourse = await Course.delete({
+    const deletedCourse = await prisma.course.delete({
       where: {
         id: courseId,
       },
@@ -381,7 +379,7 @@ const handleBalance = async (req: any, res: Response) => {
     });
   }
 
-  const balance = await Balance.findFirst({
+  const balance = await prisma.balance.findFirst({
     where: {
       adminId: admin.id,
     },
@@ -424,7 +422,7 @@ const handlePayout = async (req: any, res: Response) => {
   }
 
   try {
-    const balance = await Balance.findFirst({
+    const balance = await prisma.balance.findFirst({
       where: {
         adminId: admin.id,
       },

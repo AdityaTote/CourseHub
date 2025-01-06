@@ -45,7 +45,7 @@ const handleUserRegister = async (req: Request, res: Response) => {
     }
 
     //   check user already exists or not
-    const userExists = await User.findFirst({
+    const userExists = await prisma.user.findFirst({
       where: {
         email: email,
       }
@@ -64,7 +64,7 @@ const handleUserRegister = async (req: Request, res: Response) => {
       });
     }
 
-    const user = await User.create({
+    const user = await prisma.user.create({
       data: {
         email: email,
         firstName: firstName,
@@ -105,7 +105,7 @@ const handleUserLogin = async (req: Request, res: Response) => {
     }
 
     //   check user already exists or not
-    const userExists = await User.findFirst({
+    const userExists = await prisma.user.findFirst({
       where: {
         email: email,
       }
@@ -164,7 +164,7 @@ const handleUserCourses = async (req: any, res: Response) => {
       return res.status(400).json({ error: "User not found" });
     }
 
-    const userCourses = await Purchase.findMany({
+    const userCourses = await prisma.purchase.findMany({
       where: {
         userId: user.id,
       },
@@ -186,7 +186,7 @@ const handleUserCourses = async (req: any, res: Response) => {
       }
     }
 
-    const courseDetails = await Course.findMany({
+    const courseDetails = await prisma.course.findMany({
       where: {
         id: {
           in: courses.map((course) => course.courseId).filter((id) => id !== null),
@@ -228,7 +228,7 @@ export const handleCheckExistingCourse = async(req: any, res: Response) => {
     })
   }
 
-  const course = await Course.findFirst({
+  const course = await prisma.course.findFirst({
     where: {
       id: courseId,
     }
@@ -243,7 +243,7 @@ export const handleCheckExistingCourse = async(req: any, res: Response) => {
     });
   }
 
-  const existingPurchase = await Purchase.findFirst({
+  const existingPurchase = await prisma.purchase.findFirst({
     where: {
       courseId,
       userId: user.id,
@@ -300,8 +300,6 @@ export const handleCoursePurchase = async (req: any, res: Response) => {
     }
 
    const confirm = verifyTransaction(signature, address);
-
-   console.log(confirm)
 
    if(!confirm){
       return res.status(400).json({
