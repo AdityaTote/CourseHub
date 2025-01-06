@@ -3,7 +3,7 @@ import { prisma } from "../db/db";
 
 export const handleCoursesPreview = async (req: any, res: Response) => {
   try {
-    const courses = await Course.findMany({
+    const courses = await prisma.course.findMany({
       select: {
         id: true,
         title: true,
@@ -98,7 +98,7 @@ export const handleCourseSearch = async(req: any, res: Response) => {
     });
   }
 
-  const courses = await Course.findMany({
+  const courses = await prisma.course.findMany({
     where: {
       OR: [
         {
