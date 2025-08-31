@@ -462,7 +462,7 @@ const handlePayout = async (req: any, res: Response) => {
         const adminTxn = await tx.adminTransaction.create({
           data: {
             amount: String(amount),
-            tansactionId: payoutTxn?.sign,
+            transactionId: payoutTxn?.sign,
             adminId: admin.id,
           },
         });
@@ -503,7 +503,7 @@ const handleAdminTransactions = async (req: any, res: Response) => {
     },
     select: {
       id: true,
-      tansactionId: true,
+      transactionId: true,
       amount: true,
       createdAt: true,
     }

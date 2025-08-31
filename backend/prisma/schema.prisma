@@ -45,7 +45,7 @@ model Course {
   Purchases     Purchase[]
   Transactions  Transaction[]
   createrId     String
-  creater       Admin         @relation(fields: [createrId], references: [id])
+  creater       Admin         @relation(fields: [createrId], references: [id], onDelete: Cascade)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -53,11 +53,11 @@ model Course {
 model Purchase {
   id            String      @id @unique @default(uuid())
   transactionId String      @unique
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
   userId        String
-  user          User        @relation(fields: [userId], references: [id])
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   courseId      String
-  course        Course      @relation(fields: [courseId], references: [id])
+  course        Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
@@ -69,9 +69,9 @@ model Transaction {
   signature       String
   purchasedCourse Purchase?
   courseId        String
-  course          Course    @relation(fields: [courseId], references: [id])
+  course          Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   userId          String
-  user            User      @relation(fields: [userId], references: [id])
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
@@ -81,16 +81,16 @@ model Balance {
   pendingAmount Float
   lockedAmount  Float
   adminId       String   @unique
-  admin         Admin    @relation(fields: [adminId], references: [id])
+  admin         Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
 
 model AdminTransaction {
   id           String   @id @unique @default(uuid())
-  tansactionId String   @unique
+  transactionId String   @unique
   adminId      String
-  admin        Admin    @relation(fields: [adminId], references: [id])
+  admin        Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
   amount       String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

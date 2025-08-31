@@ -6,10 +6,12 @@ const app = express();
 
 // Middleware
 app.use(
-  cors({
-    origin: ["http://localhost:5173", "https://course-hub-teal.vercel.app"],
-    credentials: true,
-  })
+	cors({
+		origin: ["http://localhost:5173", "https://course-hub-teal.vercel.app"],
+		credentials: true,
+		allowedHeaders: ["Content-Type", "Authorization"],
+		methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+	})
 );
 app.use(cookieParser());
 app.use(express.json());

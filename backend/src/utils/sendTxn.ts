@@ -17,7 +17,7 @@ export async function sendTxn(
         })
     )
 
-    const keypair = Keypair.fromSecretKey(decode.decode(privateKey !))
+    const keypair = Keypair.fromSecretKey(decode.decode(privateKey!))
 
    try {
      const signature = await sendAndConfirmTransaction(
@@ -32,14 +32,16 @@ export async function sendTxn(
              verify: false
          }
      }
-
-     console.log
  
      return{
          sign: signature,
          verify: true
      }
    } catch (error) {
-    console.log(error)
+       console.error(error);
+       return {
+           sign: null,
+           verify: false
+       };
    }
 }
